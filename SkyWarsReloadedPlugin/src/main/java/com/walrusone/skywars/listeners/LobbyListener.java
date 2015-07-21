@@ -47,12 +47,6 @@ public class LobbyListener implements Listener {
 	}
 
 	@EventHandler
-	public void onCreatureSpawn(CreatureSpawnEvent e) {
-		if (e.getSpawnReason() == SpawnReason.NATURAL)
-			e.setCancelled(true);
-	}
-
-	@EventHandler
 	public void onEntityDamageEntity(EntityDamageByEntityEvent e) {
 		Entity ent = e.getEntity();
 		Entity damager = e.getDamager();
