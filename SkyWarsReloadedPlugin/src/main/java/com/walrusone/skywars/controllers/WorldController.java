@@ -59,11 +59,11 @@ public class WorldController {
         world.setWeatherDuration(Integer.MAX_VALUE);
         world.setAutoSave(false);
         world.setKeepSpawnInMemory(false);
-        world.setTicksPerAnimalSpawns(0);
-        world.setTicksPerMonsterSpawns(0);
+        //world.setTicksPerAnimalSpawns(0);
+        //world.setTicksPerMonsterSpawns(0);
 
-        world.setGameRuleValue("doMobSpawning", "false");
-        world.setGameRuleValue("mobGriefing", "false");
+        world.setGameRuleValue("doMobSpawning", "true");
+        world.setGameRuleValue("mobGriefing", "true");
         world.setGameRuleValue("doFireTick", "false");
         world.setGameRuleValue("showDeathMessages", "false");
 
@@ -103,6 +103,8 @@ public class WorldController {
         world.setSpawnFlags(false, false);
         if (isLobby.equalsIgnoreCase("lobby")) {
         	world.setPVP(false);
+        	world.setTicksPerAnimalSpawns(0);
+	        world.setTicksPerMonsterSpawns(0);
         } else {
         	world.setPVP(true);
         }
@@ -111,11 +113,9 @@ public class WorldController {
         world.setWeatherDuration(Integer.MAX_VALUE);
         world.setAutoSave(false);
         world.setKeepSpawnInMemory(false);
-        world.setTicksPerAnimalSpawns(0);
-        world.setTicksPerMonsterSpawns(0);
 
-        world.setGameRuleValue("doMobSpawning", "false");
-        world.setGameRuleValue("mobGriefing", "false");
+        world.setGameRuleValue("doMobSpawning", "true");
+        world.setGameRuleValue("mobGriefing", "true");
         world.setGameRuleValue("doFireTick", "false");
         world.setGameRuleValue("showDeathMessages", "false");
         

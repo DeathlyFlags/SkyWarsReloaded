@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="lib" path="/Splashoon/lib/spigot-1.8.6.jar"/>
+	<classpathentry kind="src" path="API/src/main/java"/>
+	<classpathentry kind="src" path="SkyWarsReloadedPlugin/src/main/java"/>
+	<classpathentry kind="src" path="v1_7_R3/src/main/java"/>
+	<classpathentry kind="src" path="v1_7_R4/src/main/java"/>
+	<classpathentry kind="src" path="v1_8_R1/src/main/java"/>
+	<classpathentry kind="src" path="v1_8_R2/src/main/java"/>
+	<classpathentry kind="src" path="v1_8_R3/src/main/java"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
+		<attributes>
+			<attribute name="owner.project.facets" value="java"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Splashoon/lib/AsyncWorldEdit.jar"/>
+	<classpathentry kind="lib" path="/Splashoon/lib/AsyncWorldEditInjector.jar"/>
+	<classpathentry kind="lib" path="/Splashoon/lib/bungeecord-api-1.8-SNAPSHOT-javadoc.jar"/>
+	<classpathentry kind="lib" path="/Splashoon/lib/BungeeCord.jar"/>
+	<classpathentry kind="lib" path="/Splashoon/lib/ResourcePackAPI_v1.4.jar"/>
+	<classpathentry kind="lib" path="/Splashoon/lib/spigot-1.8-R0.1-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="/Splashoon/lib/spigot-1.8.3.jar"/>
+	<classpathentry kind="lib" path="/Splashoon/lib/spigot-1.8.jar"/>
+	<classpathentry kind="lib" path="/Splashoon/lib/Spigot-ProtocolHack.jar"/>
+	<classpathentry kind="lib" path="/Splashoon/lib/TitleAPI.jar"/>
+	<classpathentry kind="lib" path="/Splashoon/lib/Vault.jar"/>
+	<classpathentry kind="lib" path="/Splashoon/lib/worldedit-bukkit-6.0.2-SNAPSHOT-dist.jar"/>
+	<classpathentry kind="lib" path="/Splashoon/lib/worldedit-bukkit-6.1.1-SNAPSHOT-dist.jar"/>
+	<classpathentry kind="lib" path="/Splashoon/lib/worldguard-6.0.0-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="v1_7_R3/lib/craftbukkit-1.7.10-R0.1.jar"/>
+	<classpathentry kind="lib" path="v1_7_R3/lib/craftbukkit-1.7.9-R0.2-SNAPSHOT.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
