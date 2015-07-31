@@ -59,12 +59,12 @@ public class WorldController {
         world.setWeatherDuration(Integer.MAX_VALUE);
         world.setAutoSave(false);
         world.setKeepSpawnInMemory(false);
-        world.setTicksPerAnimalSpawns(1);
-        world.setTicksPerMonsterSpawns(1);
+        world.setTicksPerAnimalSpawns(-1);
+        world.setTicksPerMonsterSpawns(-1);
 
-        world.setGameRuleValue("doMobSpawning", "false");
-        world.setGameRuleValue("mobGriefing", "false");
-        world.setGameRuleValue("doFireTick", "false");
+        world.setGameRuleValue("doMobSpawning", "true");
+        world.setGameRuleValue("mobGriefing", "true");
+        world.setGameRuleValue("doFireTick", "true");
         world.setGameRuleValue("showDeathMessages", "false");
 
         Block b = world.getBlockAt(0, 20, 0);
@@ -111,12 +111,12 @@ public class WorldController {
         world.setWeatherDuration(Integer.MAX_VALUE);
         world.setAutoSave(false);
         world.setKeepSpawnInMemory(false);
-	    world.setTicksPerAnimalSpawns(1);
-	    world.setTicksPerMonsterSpawns(1);
-        
-        world.setGameRuleValue("doMobSpawning", "false");
-        world.setGameRuleValue("mobGriefing", "false");
-        world.setGameRuleValue("doFireTick", "false");
+        world.setTicksPerAnimalSpawns(-1);
+        world.setTicksPerMonsterSpawns(-1);
+
+        world.setGameRuleValue("doMobSpawning", "true");
+        world.setGameRuleValue("mobGriefing", "true");
+        world.setGameRuleValue("doFireTick", "true");
         world.setGameRuleValue("showDeathMessages", "false");
         
         boolean loaded = false;

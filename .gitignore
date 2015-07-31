@@ -48,6 +48,7 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+<<<<<<< HEAD
 
 SkyWarsReloadedPlugin/lib/craftbukkit-1.8.4.jar
 SkyWarsReloadedPlugin/lib/Multiverse-Core-2.5.jar
@@ -62,3 +63,6 @@ v1_7_R3/lib/craftbukkit-1.7.9-R0.2-SNAPSHOT.jar
 v1_7_R3/lib/craftbukkit-1.7.10-R0.1.jar
 SkyWarsReloadedPlugin/lib/Multiverse-Core-2.5.jar
 SkyWarsReloadedPlugin/lib/VoidWorld.jar
+=======
+/bin/
+>>>>>>> refs/remotes/origin/master

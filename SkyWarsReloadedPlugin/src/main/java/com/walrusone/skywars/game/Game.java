@@ -114,7 +114,7 @@ public class Game {
 				double z =  gameMap.getSpawns().get(1).getZ()+0.5;
 				specSpawn = new Location(mapWorld, x, y, z);
 			}
-	    	minPlayers = (int) (numberOfSpawns * SkyWarsReloaded.getCfg().getMinPercentPlayers()/100);
+	    	minPlayers = (int) Math.ceil(numberOfSpawns * SkyWarsReloaded.getCfg().getMinPercentPlayers()/100);
 	    	if (minPlayers < 1) {
 	    		minPlayers = 1;
 	    	}

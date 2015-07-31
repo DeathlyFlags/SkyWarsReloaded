@@ -42,7 +42,6 @@ public class IconMenu {
         player.openInventory(inventory);
     }
     
-    @SuppressWarnings("deprecation")
 	public void update(Player player) {
     	InventoryView inventory = player.getOpenInventory();
     	if (inventory != null) {
@@ -66,8 +65,6 @@ public class IconMenu {
             return;
         }
 
-        event.setCancelled(true);
-
         int slot = event.getRawSlot();
  
         try {
@@ -77,7 +74,8 @@ public class IconMenu {
         } catch (NullPointerException e) {
         	return;
         }
-
+        
+        event.setCancelled(true);
 
         OptionClickEvent clickEvent = new OptionClickEvent((Player) event.getWhoClicked(), slot, optionNames[slot]);
         handler.onOptionClick(clickEvent);

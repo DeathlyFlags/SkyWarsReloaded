@@ -100,11 +100,11 @@ public class GameMap {
 		    world.setStorm(false);
 		    world.setDifficulty(Difficulty.NORMAL);
 		    world.setSpawnLocation(2000, 0, 2000);
-		    world.setTicksPerAnimalSpawns(1);
-		    world.setTicksPerMonsterSpawns(1);
-	        world.setGameRuleValue("doMobSpawning", "false");
-	        world.setGameRuleValue("mobGriefing", "false");
-	        world.setGameRuleValue("doFireTick", "false");
+		    world.setTicksPerAnimalSpawns(-1);
+		    world.setTicksPerMonsterSpawns(-1);
+	        world.setGameRuleValue("doMobSpawning", "true");
+	        world.setGameRuleValue("mobGriefing", "true");
+	        world.setGameRuleValue("doFireTick", "true");
 	        world.setGameRuleValue("showDeathMessages", "false");
 		}
 		return loaded;
