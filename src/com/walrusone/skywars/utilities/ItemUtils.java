@@ -167,53 +167,73 @@ public class ItemUtils {
 
 	private static Enchantment getEnchant(String enchant) {
 		switch (enchant.toLowerCase()) {
+		case "protection_environmental":
 		case "protection":
 			return Enchantment.PROTECTION_ENVIRONMENTAL;
+		case "protection_projectile":
 		case "projectileprotection":
 			return Enchantment.PROTECTION_PROJECTILE;
+		case "protection_fire":
 		case "fireprotection":
 			return Enchantment.PROTECTION_FIRE;
+		case "protection_fall":
 		case "featherfall":
 			return Enchantment.PROTECTION_FALL;
+		case "protection_explosions":
 		case "blastprotection":
 			return Enchantment.PROTECTION_EXPLOSIONS;
+		case "oxygen":
 		case "respiration":
 			return Enchantment.OXYGEN;
+		case "water_worker":
 		case "aquaaffinity":
 			return Enchantment.WATER_WORKER;
+		case "damage_all":
 		case "sharpness":
 			return Enchantment.DAMAGE_ALL;
+		case "damage_undead":
 		case "smite":
 			return Enchantment.DAMAGE_UNDEAD;
+		case "damage_arthropods":
 		case "baneofarthropods":
 			return Enchantment.DAMAGE_ARTHROPODS;
 		case "knockback":
 			return Enchantment.KNOCKBACK;
+		case "fire_aspect":
 		case "fireaspect":
 			return Enchantment.FIRE_ASPECT;
+		case "deapth_strider":
 		case "depthstrider":
 			return Enchantment.DEPTH_STRIDER;
+		case "loot_bonus_mobs":
 		case "looting":
 			return Enchantment.LOOT_BONUS_MOBS;
+		case "arrow_damage":
 		case "power":
 			return Enchantment.ARROW_DAMAGE;
+		case "arrow_knockback":
 		case "punch":
 			return Enchantment.ARROW_KNOCKBACK;
+		case "arrow_fire":
 		case "flame":
 			return Enchantment.ARROW_FIRE;
+		case "arrow_infinite":
 		case "infinity":
 			return Enchantment.ARROW_INFINITE;
+		case "dig_speed":
 		case "efficiency":
 			return Enchantment.DIG_SPEED;
+		case "silk_touch":
 		case "silktouch":
 			return Enchantment.SILK_TOUCH;
+		case "durability":
 		case "unbreaking":
 			return Enchantment.DURABILITY;
+		case "loot_bonus_blocks":
 		case "fortune":
 			return Enchantment.LOOT_BONUS_BLOCKS;
-		case "luckofthesea":
-			return Enchantment.LUCK;
 		case "luck":
+		case "luckofthesea":
 			return Enchantment.LUCK;
 		case "lure":
 			return Enchantment.LURE;
