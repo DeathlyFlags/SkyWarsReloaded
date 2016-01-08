@@ -222,7 +222,7 @@ public class PermKitMenu {
     
     
     public boolean hasPermission(Player player, GameKit kit) {
-        return player.isOp() || player.hasPermission(premissionPrefix + kit.getName().toLowerCase());
+        return player.isOp() || player.hasPermission(premissionPrefix + "paid." + kit.getName().toLowerCase());
     }
     
     public boolean hasFreePermission(GamePlayer player, GameKit kit) {
