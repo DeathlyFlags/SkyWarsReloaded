@@ -245,12 +245,12 @@ public class Game {
     		} 
     	}
     	
-    	if (votesForNormal >= votesForBasic && votesForNormal >= votesForOP) {
-    		vote = "normal";
-    	} else if (votesForOP >= votesForBasic) {
-    		vote = "op";
-    	} else {
+    	if (votesForBasic >= votesForNormal && votesForBasic >= votesForOP) {
     		vote = "basic";
+    	} else if (votesForNormal >= votesForOP) {
+    		vote = "normal";
+    	} else {
+    		vote = "op";
     	}
     	
 		for (EmptyChest eChest: gameMap.getChests().values()) {
@@ -301,7 +301,7 @@ public class Game {
 					startGame();
 				}
 				count++;
-        	} else if (gPlayers.size() < minPlayers) {
+        	} else if (gPlayers.size() < minPlayers && gPlayers.size() <= 1) {
         		count = 0;
         	}
         }

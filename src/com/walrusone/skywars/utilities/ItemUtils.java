@@ -312,7 +312,7 @@ public class ItemUtils {
 		return itemStack;
 	}
 
-	private static boolean isInteger(String str) {
+	public static boolean isInteger(String str) {
 		try {
 			Integer.parseInt(str);
 		} catch (NumberFormatException nfe) {

@@ -194,56 +194,57 @@ public class ChestController {
                         break;
                     }
                 }
-            }
-    	} else if (type.equalsIgnoreCase("basic")) {
-    		Inventory inventory = chest.getInventory();
-    		inventory.clear();
-            int added = 0;
-            Collections.shuffle(randomDLoc);
+			}
+		} else if (type.equalsIgnoreCase("basic")) {
+			Inventory inventory = chest.getInventory();
+			inventory.clear();
+			int added = 0;
+			Collections.shuffle(randomDLoc);
 
-            for (ChestItem chestItem : basicChestItemList) {
-                if (random.nextInt(100) + 1 <= chestItem.getChance()) {
-                    inventory.setItem(randomDLoc.get(added), chestItem.getItem());
-                    if (added++ >= inventory.getSize()-1) {
-                        break;
-                    }
-                }
-            }
-    	} else {
-            Inventory inventory = chest.getInventory();
-    		inventory.clear();
-            int added = 0;
-            Collections.shuffle(randomDLoc);
+			for (ChestItem chestItem : basicChestItemList) {
+				if (random.nextInt(100) + 1 <= chestItem.getChance()) {
+					inventory.setItem(randomDLoc.get(added),
+							chestItem.getItem());
+					if (added++ >= inventory.getSize() - 1) {
+						break;
+					}
+				}
+			}
+		} else {
+			Inventory inventory = chest.getInventory();
+			inventory.clear();
+			int added = 0;
+			Collections.shuffle(randomDLoc);
 
-            for (ChestItem chestItem : chestItemList) {
-                if (random.nextInt(100) + 1 <= chestItem.getChance()) {
-                    inventory.setItem(randomDLoc.get(added), chestItem.getItem());
-                    if (added++ >= inventory.getSize()-1) {
-                        break;
-                    }
-                }
-            }
-    	}
-    }
+			for (ChestItem chestItem : chestItemList) {
+				if (random.nextInt(100) + 1 <= chestItem.getChance()) {
+					inventory.setItem(randomDLoc.get(added),
+							chestItem.getItem());
+					if (added++ >= inventory.getSize() - 1) {
+						break;
+					}
+				}
+			}
+		}
+	}
 
-    private class ChestItem {
+	private class ChestItem {
 
-        private ItemStack item;
-        private int chance;
+		private ItemStack item;
+		private int chance;
 
-        public ChestItem(ItemStack item, int chance) {
-            this.item = item;
-            this.chance = chance;
-        }
+		public ChestItem(ItemStack item, int chance) {
+			this.item = item;
+			this.chance = chance;
+		}
 
-        public ItemStack getItem() {
-            return item;
-        }
+		public ItemStack getItem() {
+			return item;
+		}
 
-        public int getChance() {
-            return chance;
-        }
-    }
-    
+		public int getChance() {
+			return chance;
+		}
+	}
 
 }
