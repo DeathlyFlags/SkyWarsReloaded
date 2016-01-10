@@ -180,10 +180,10 @@ public class GamePlayer {
 		return inGame;
 	}
 
-	public void spectateMode(boolean state, Game game, Location location, boolean shutdown) {
-		if (state) {
-			if (getP() != null) {
-				setSpectating(state);
+	public void spectateMode(final boolean state, Game game, Location location, boolean shutdown) {
+		if (getP() != null) {
+			setSpectating(state);
+			if(state) {
 				game.addSpectator(this);
 				setSpecGame(game.getGameNumber());
 				for (Player target: SkyWarsReloaded.get().getServer().getOnlinePlayers()) {
@@ -192,54 +192,35 @@ public class GamePlayer {
 				getP().setFoodLevel(20);
 				getP().setScoreboard(game.getScoreboard());
 				getP().setGameMode(GameMode.SPECTATOR);
-				getP().teleport(location, TeleportCause.PLUGIN);
+			} else {
+				setSpecGame(-1);
+				for (Player target: SkyWarsReloaded.get().getServer().getOnlinePlayers()) {
+					target.showPlayer(getP());
+				}
+				getP().setScoreboard(SkyWarsReloaded.get().getServer().getScoreboardManager().getNewScoreboard());
+				for (PotionEffect effect : getP().getActivePotionEffects()) {
+					getP().removePotionEffect(effect.getType());
+				}
+				getP().setFireTicks(0);
+				getP().setGameMode(GameMode.SURVIVAL);
+			}
+			getP().teleport(location, TeleportCause.PLUGIN);
+			if (state || (!state && !shutdown)) {
 				SkyWarsReloaded.get().getServer().getScheduler().scheduleSyncDelayedTask(SkyWarsReloaded.get(), new Runnable() {
 					@Override
 					public void run() {
 						if (getP() != null) {
-							getP().setAllowFlight(true);
-							getP().setFlying(true);
-							getP().getInventory().clear();
-							giveSpectateItems();
+							getP().setAllowFlight(state);
+							getP().setFlying(state);
+							SkyWarsReloaded.getInvC().restoreInventory(getP());
 						}
 					}
 				}, 5);
-
-			}
-		} else {
-			if (getP() != null) {
-				setSpectating(state);
-				setSpecGame(-1);
-				for (Player target: SkyWarsReloaded.get().getServer().getOnlinePlayers()) {
-					if (getP() != null) {
-						target.showPlayer(getP());
-					}
-				}
-				getP().setScoreboard(SkyWarsReloaded.get().getServer().getScoreboardManager().getNewScoreboard());
-				for (PotionEffect effect : getP().getActivePotionEffects()) {
-			        getP().removePotionEffect(effect.getType());
-				}
-				getP().setFireTicks(0);
-				getP().teleport(location, TeleportCause.PLUGIN);
-				if (!shutdown) {
-					SkyWarsReloaded.get().getServer().getScheduler().scheduleSyncDelayedTask(SkyWarsReloaded.get(), new Runnable() {
-						@Override
-						public void run() {
-							if (getP() != null) {
-								getP().setAllowFlight(false);
-								getP().setFlying(false);
-								SkyWarsReloaded.getInvC().restoreInventory(getP());
-							}
-						}
-					}, 5);
-				}
 			}
 		}
-		
 	}
 
-	private void giveSpectateItems() {
-		
+	/*private void giveSpectateItems() {
 		if (getP() != null) {
 			getP().getInventory().clear();
 			getP().getInventory().setItem(SkyWarsReloaded.getCfg().getExitItemSlot(), SkyWarsReloaded.getCfg().getExitGameItem());
@@ -250,7 +231,7 @@ public class GamePlayer {
 			}
 			getP().getInventory().setItem(SkyWarsReloaded.getCfg().getSpectateItemSlot(), SkyWarsReloaded.getCfg().getSpectatePlayerItem());
 		}
-	}
+	}*/
 
 	public boolean gamemodeChangeAllowed() {
 		if (isSpectating) {

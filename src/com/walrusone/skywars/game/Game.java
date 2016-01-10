@@ -26,6 +26,7 @@ import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Firework;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
@@ -229,12 +230,19 @@ public class Game {
 		return 1;
 	}
 
+	private void killMobs() {
+		for (Entity entity : mapWorld.getEntities()){
+			if(entity instanceof Monster)
+				entity.remove();
+		}
+	}
+
 	private void fillChests() {
 		int votesForBasic = 0;
         int votesForNormal = 0;
         int votesForOP = 0;
 
-        String vote = "normal";
+        String vote = SkyWarsReloaded.getCfg().getDefaultChest();
     	for (GamePlayer gPlayer: getPlayers()) {
     		if (gPlayer.getOpVote() == 1) {
     			votesForBasic++;
@@ -245,11 +253,11 @@ public class Game {
     		} 
     	}
     	
-    	if (votesForBasic >= votesForNormal && votesForBasic >= votesForOP) {
+    	if (votesForBasic > votesForNormal && votesForBasic > votesForOP) {
     		vote = "basic";
-    	} else if (votesForNormal >= votesForOP) {
+    	} else if (votesForNormal > votesForBasic && votesForNormal > votesForOP) {
     		vote = "normal";
-    	} else {
+    	} else if (votesForOP > votesForBasic && votesForOP > votesForNormal) {
     		vote = "op";
     	}
     	
@@ -278,7 +286,7 @@ public class Game {
 
 	public void prepareForStart() {
 		if (gameState == GameState.PREGAME) {
-			if (gPlayers.size() >= minPlayers) {
+			if (gPlayers.size() >= minPlayers && gPlayers.size() > 1) {
 				if (count == 0) {
 					sendGameMessage(new Messaging.MessageFormatter()
     					.withPrefix()
@@ -290,21 +298,26 @@ public class Game {
     					.withPrefix()
     					.setVariable("time", "" + (SkyWarsReloaded.getCfg().preGameTimer() - count))
     					.format("game.countdown-continue"));
+						playSound(Sound.LEVEL_UP);
 					} else if ((SkyWarsReloaded.getCfg().preGameTimer() - count) < 5 ) {
 						sendGameMessage(new Messaging.MessageFormatter()
     					.withPrefix()
     					.setVariable("time", "" + (SkyWarsReloaded.getCfg().preGameTimer() - count))
     					.format("game.countdown-continue"));
+						playSound(Sound.LEVEL_UP);
 					}
 
 				} else if (count >= SkyWarsReloaded.getCfg().preGameTimer()) {
 					startGame();
 				}
+				
+				updateExpBar(SkyWarsReloaded.getCfg().preGameTimer() - count);
 				count++;
-        	} else if (gPlayers.size() < minPlayers && gPlayers.size() <= 1) {
+        	} else 
         		count = 0;
-        	}
+        	
         }
+		
 		if (gameState == GameState.PREGAME || gameState == GameState.PLAYING) {
 			sanityChecker++;
 			if (sanityChecker == 5) {
@@ -405,6 +418,7 @@ public class Game {
 		if (SkyWarsReloaded.getCfg().signJoinMode()) {
 			SkyWarsReloaded.getGC().updateSign(gameNumber);
 		}
+		killMobs();
 		fillChests();
 		removeSpawnHousing();
 		for (GamePlayer gPlayer: getPlayers()) {
@@ -773,10 +787,8 @@ public class Game {
 		updateScoreboard();
 		preparePlayerForExit(target);
 
-		if (SkyWarsReloaded.getCfg().spectatingEnabled()) {
-			target.setSpectating(true);
-			target.setSpecGame(gameNumber);
-		} 
+		if (SkyWarsReloaded.getCfg().spectatingEnabled()) 
+			target.spectateMode(true, this, target.getP().getLocation(), shutdown);
 		
 		final Game game = this;
 		
@@ -1148,17 +1160,13 @@ public class Game {
 	
 	public void removeSpectator(GamePlayer gPlayer) {
 		spectators.remove(gPlayer);
-		if (SkyWarsReloaded.getCfg().bungeeEnabled()) {
-			if (gPlayer.getP() != null) {
-				gPlayer.spectateMode(false, this, SkyWarsReloaded.getCfg().getSpawn(), shutdown);
-				BungeeUtil.connectToServer(gPlayer.getP(), SkyWarsReloaded.getCfg().getLobbyServer());
-			}
-		} else {
-			if (gPlayer.getP() != null) {
-				gPlayer.spectateMode(false, this, SkyWarsReloaded.getCfg().getSpawn(), shutdown);
-			}
-		}
 		if (gPlayer.getP() != null) {
+			
+			if (SkyWarsReloaded.getCfg().bungeeEnabled())
+				BungeeUtil.connectToServer(gPlayer.getP(), SkyWarsReloaded.getCfg().getLobbyServer());
+			
+			gPlayer.spectateMode(false, this, SkyWarsReloaded.getCfg().getSpawn(), shutdown);
+			
 			SkyWarsReloaded.getScore().getScoreboard(gPlayer.getP());
 		}
 	}
@@ -1452,6 +1460,16 @@ public class Game {
 	            mapWorld.getBlockAt(x, y + 4, z).setType(material);
 	            mapWorld.getBlockAt(x, y + 4, z).setData(data);
 			}
+		}
+	}
+	
+	private void updateExpBar(Integer lvl) {
+		for(GamePlayer gpl : gPlayers) {
+			// 1.00 es a SkyWarsReloaded.getCfg().preGameTimer()
+			// lo que X es a lvl
+			// X = lvl * 1.00 / SkyWarsReloaded.getCfg().preGameTimer()
+			gpl.getP().setExp(lvl / SkyWarsReloaded.getCfg().preGameTimer());
+			gpl.getP().setLevel(lvl);
 		}
 	}
 }

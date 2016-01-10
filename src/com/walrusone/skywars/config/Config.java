@@ -32,6 +32,7 @@ public class Config {
 	private int timeAfterGame;
 	private int preGameTimer;
 	private int resetPreGameTimerThreshold;
+	private String defaultChest;
 	private boolean clearInventoryOnJoin;
 	private boolean clearXPOnJoin;
 	private boolean clearPotionEffectsOnJoin;
@@ -163,6 +164,7 @@ public class Config {
 			preGameTimer = SkyWarsReloaded.get().getConfig().getInt("gameSettings.preGameTimer");
 			resetPreGameTimerOnJoin = SkyWarsReloaded.get().getConfig().getBoolean("gameSettings.resetPreGameTimerOnJoin");
 			resetPreGameTimerThreshold = SkyWarsReloaded.get().getConfig().getInt("gameSettings.resetPreGameTimerThreshold");
+			defaultChest = SkyWarsReloaded.get().getConfig().getString("gameSettings.defaultChest");
 			maxMapSize = SkyWarsReloaded.get().getConfig().getInt("gameSettings.maxMapSize");
 			maxNumberOfGames = SkyWarsReloaded.get().getConfig().getInt("gameSettings.maxNumberOfGames");
 			timeAfterGame = SkyWarsReloaded.get().getConfig().getInt("gameSettings.timeAfterGame");
@@ -762,6 +764,10 @@ public class Config {
 		return resetPreGameTimerThreshold;
 	}
 	
+	public String getDefaultChest() {
+		return defaultChest;
+	}
+	
 	public int getMaxMapSize() {
 		return maxMapSize;
 	}
@@ -875,6 +881,7 @@ public class Config {
 		preGameTimer = SkyWarsReloaded.get().getConfig().getInt("gameVariables.preGameTimer");
 		resetPreGameTimerOnJoin = SkyWarsReloaded.get().getConfig().getBoolean("gameVariables.resetPreGameTimerOnJoin");
 		resetPreGameTimerThreshold = SkyWarsReloaded.get().getConfig().getInt("gameVariables.resetPreGameTimerThreshold");
+		defaultChest = SkyWarsReloaded.get().getConfig().getString("gameVariables.defaultChest");
 		maxMapSize = SkyWarsReloaded.get().getConfig().getInt("gameVariables.maxMapSize");
 		maxNumberOfGames = SkyWarsReloaded.get().getConfig().getInt("gameVariables.maxNumberOfGames");
 		timeAfterGame = SkyWarsReloaded.get().getConfig().getInt("gameVariables.timeAfterGame");
@@ -986,6 +993,11 @@ public class Config {
 		if (resetPreGameTimerThreshold < 0 || resetPreGameTimerThreshold > 100) {
 			resetPreGameTimerThreshold = 80;
 			SkyWarsReloaded.get().getLogger().info("resetPreGameTimerThreshold must be between 0 and 100, defaulting to 80");
+		}
+		
+		if (defaultChest != "normal" && defaultChest != "basic" && defaultChest != "op") {
+			defaultChest = "normal";
+			SkyWarsReloaded.get().getLogger().info("defaultChest must be between 'normal', 'basic' or 'op'");
 		}
 		
 		if (spectateItemSlot < 0 || spectateItemSlot > 8) {

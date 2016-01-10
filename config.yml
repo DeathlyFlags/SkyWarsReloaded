@@ -12,7 +12,8 @@
 #  minPercentPlayers: 50	//The percentage of a full lobby, before players in queue are teleported and before a game will start.
 #  preGameTimer: 20			//The countdown time before the game starts once the minimum number of players are in the game.
 #  resetPreGameTimerOnJoin: true	//If set to true, the pregame timer will reset whenver a new player joins a game.
-#  resetPreGameTimerThreshold: 80	//This is the threshold based on the percentage of players in a game. If the number of players in the game is higher than the threshold, the timer will not restart. 
+#  resetPreGameTimerThreshold: 80	//This is the threshold based on the percentage of players in a game. If the number of players in the game is higher than the threshold, the timer will not restart.
+#  defaultChest: normal	//This will be the default chest on matches. Must be 'normal', 'basic' or 'op'. 
 #  timeAfterGame: 10	//This is the amount of time after the end of a game, before the game shutsdown/restarts.
 #  maxMapSize: 200		//This is the maximum square size of the map. 
 #  maxNumberOfGames: -1 	//This is the maximum number of games possible on the server. If set to -1, it is unlimited. 
@@ -96,6 +97,7 @@ gameSettings:
   preGameTimer: 20
   resetPreGameTimerOnJoin: true
   resetPreGameTimerThreshold: 80
+  defaultChest: normal
   timeAfterGame: 10
   maxMapSize: 200
   maxNumberOfGames: -1

@@ -2,7 +2,7 @@ name: SkyWarsReloaded
 main: com.walrusone.skywars.SkyWarsReloaded
 version: 2.8.4
 depend: [Vault]
-softdepend: [Multiverse-Core]
+softdepend: [Multiverse-Core, DeluxeChat]
 
 commands:
    swr:
@@ -13,6 +13,7 @@ commands:
       aliases: [g]
       description: Allows you to send a message to all players
    leave:
+      aliases: [salir]
       description: Allows you to leave a SkyWarsReloaded game quickly.
       usage: /leave
 permissions:

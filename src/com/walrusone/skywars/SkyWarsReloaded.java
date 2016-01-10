@@ -8,6 +8,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Logger;
 
+import me.clip.deluxechat.placeholders.DeluxePlaceholderHook;
+import me.clip.deluxechat.placeholders.PlaceholderHandler;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
 
@@ -156,6 +158,8 @@ public class SkyWarsReloaded extends JavaPlugin implements PluginMessageListener
         if(config.logFilterEnabled()) {
             getServer().getLogger().setFilter(new LoggerFilter());
         }
+        
+        loadDeluxeChatPlaceholders();
         
         wc = new WorldController();
         mc = new MapController();
@@ -616,6 +620,46 @@ public class SkyWarsReloaded extends JavaPlugin implements PluginMessageListener
 			e.printStackTrace();
 		}
 	}
+    
+    private void loadDeluxeChatPlaceholders() {
+    	if (Bukkit.getPluginManager().isPluginEnabled("DeluxeChat")) {
+
+			boolean hooked = PlaceholderHandler.registerPlaceholderHook(this,
+					new DeluxePlaceholderHook() {
+
+						/*
+						 * this method will be called any time a placeholder
+						 * %<yourplugin>_<identifier>% is found
+						 */
+						@Override
+						public String onPlaceholderRequest(Player p, String identifier) {
+							GamePlayer gp = pc.getPlayer(p.getUniqueId());
+							if (identifier.equalsIgnoreCase("gamesplayed")) 
+								return String.valueOf(gp.getGamesPlayed());
+							if (identifier.equalsIgnoreCase("gameswon")) 
+								return String.valueOf(gp.getWins());
+							if (identifier.equalsIgnoreCase("gameslost")) 
+								return String.valueOf(gp.getGamesPlayed() - gp.getWins());
+							if (identifier.equalsIgnoreCase("balance")) 
+								return String.valueOf(gp.getBalance());
+							if (identifier.equalsIgnoreCase("score")) 
+								return String.valueOf(gp.getScore());
+							if (identifier.equalsIgnoreCase("kills")) 
+								return String.valueOf(gp.getKills());
+							if (identifier.equalsIgnoreCase("deaths")) 
+								return String.valueOf(gp.getDeaths());
+							if (identifier.equalsIgnoreCase("blocks")) 
+								return String.valueOf(gp.getBlocks());
+							
+							return null;
+						}
+					});
+			
+			if (hooked) {
+				getLogger().info("DeluxeChat placeholder hook was successfully registered!");
+			}
+		}
+    }
 }
 
 
