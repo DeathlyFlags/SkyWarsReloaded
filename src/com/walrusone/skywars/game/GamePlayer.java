@@ -185,7 +185,7 @@ public class GamePlayer {
 			setSpectating(state);
 			if(state) {
 				game.addSpectator(this);
-				setSpecGame(game.getGameNumber());
+				game.deletePlayer(this, true, false);
 				for (Player target: SkyWarsReloaded.get().getServer().getOnlinePlayers()) {
 					target.hidePlayer(getP());
 				}

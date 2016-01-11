@@ -1,8 +1,8 @@
 name: SkyWarsReloaded
 main: com.walrusone.skywars.SkyWarsReloaded
 version: 2.8.4
-depend: [Vault]
-softdepend: [Multiverse-Core, DeluxeChat]
+depend: [Vault, DeluxeChat, HolographicDisplays]
+softdepend: [Multiverse-Core]
 
 commands:
    swr:

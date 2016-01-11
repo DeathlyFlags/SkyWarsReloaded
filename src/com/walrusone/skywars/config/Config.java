@@ -33,6 +33,7 @@ public class Config {
 	private int preGameTimer;
 	private int resetPreGameTimerThreshold;
 	private String defaultChest;
+	private int spawnPowerUpsTime;
 	private boolean clearInventoryOnJoin;
 	private boolean clearXPOnJoin;
 	private boolean clearPotionEffectsOnJoin;
@@ -165,6 +166,7 @@ public class Config {
 			resetPreGameTimerOnJoin = SkyWarsReloaded.get().getConfig().getBoolean("gameSettings.resetPreGameTimerOnJoin");
 			resetPreGameTimerThreshold = SkyWarsReloaded.get().getConfig().getInt("gameSettings.resetPreGameTimerThreshold");
 			defaultChest = SkyWarsReloaded.get().getConfig().getString("gameSettings.defaultChest");
+			spawnPowerUpsTime = SkyWarsReloaded.get().getConfig().getInt("gameSettings.spawnPowerUpsTime");
 			maxMapSize = SkyWarsReloaded.get().getConfig().getInt("gameSettings.maxMapSize");
 			maxNumberOfGames = SkyWarsReloaded.get().getConfig().getInt("gameSettings.maxNumberOfGames");
 			timeAfterGame = SkyWarsReloaded.get().getConfig().getInt("gameSettings.timeAfterGame");
@@ -768,6 +770,10 @@ public class Config {
 		return defaultChest;
 	}
 	
+	public int getSpawnPowerUpsTime() {
+		return spawnPowerUpsTime;
+	}
+	
 	public int getMaxMapSize() {
 		return maxMapSize;
 	}
@@ -882,6 +888,7 @@ public class Config {
 		resetPreGameTimerOnJoin = SkyWarsReloaded.get().getConfig().getBoolean("gameVariables.resetPreGameTimerOnJoin");
 		resetPreGameTimerThreshold = SkyWarsReloaded.get().getConfig().getInt("gameVariables.resetPreGameTimerThreshold");
 		defaultChest = SkyWarsReloaded.get().getConfig().getString("gameVariables.defaultChest");
+		spawnPowerUpsTime = SkyWarsReloaded.get().getConfig().getInt("gameVariables.spawnPowerUpsTime");
 		maxMapSize = SkyWarsReloaded.get().getConfig().getInt("gameVariables.maxMapSize");
 		maxNumberOfGames = SkyWarsReloaded.get().getConfig().getInt("gameVariables.maxNumberOfGames");
 		timeAfterGame = SkyWarsReloaded.get().getConfig().getInt("gameVariables.timeAfterGame");
@@ -998,6 +1005,11 @@ public class Config {
 		if (defaultChest != "normal" && defaultChest != "basic" && defaultChest != "op") {
 			defaultChest = "normal";
 			SkyWarsReloaded.get().getLogger().info("defaultChest must be between 'normal', 'basic' or 'op'");
+		}
+		
+		if (spawnPowerUpsTime < 0) {
+			spawnPowerUpsTime = 0;
+			SkyWarsReloaded.get().getLogger().info("spawnPowerUpsTime a value greater or equal than 0 (in secs)");
 		}
 		
 		if (spectateItemSlot < 0 || spectateItemSlot > 8) {

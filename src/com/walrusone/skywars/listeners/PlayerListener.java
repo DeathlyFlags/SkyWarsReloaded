@@ -190,7 +190,8 @@ public class PlayerListener implements Listener {
 		}
 		if (gPlayer.isSpectating()) {
 			Game game = gPlayer.getSpecGame();
-			game.removeSpectator(gPlayer);
+			if (game != null)
+				game.removeSpectator(gPlayer);
 		}
 		SkyWarsReloaded.getPC().removePlayer(gPlayer.getUUID());
 	}

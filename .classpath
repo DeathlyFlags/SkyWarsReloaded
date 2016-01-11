@@ -5,5 +5,7 @@
 	<classpathentry kind="lib" path="lib/Spigot-188.jar"/>
 	<classpathentry kind="lib" path="lib/Vault.jar"/>
 	<classpathentry kind="lib" path="lib/DeluxeChat.jar"/>
+	<classpathentry kind="lib" path="lib/TheMagnet.jar"/>
+	<classpathentry kind="lib" path="lib/HolographicDisplays.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
