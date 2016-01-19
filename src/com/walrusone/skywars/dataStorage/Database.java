@@ -1,304 +1,297 @@
 package com.walrusone.skywars.dataStorage;
 
-import java.io.IOException;
-import java.net.URL;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.UUID;
-
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.walrusone.skywars.SkyWarsReloaded;
 
+import java.io.IOException;
+import java.net.URL;
+import java.sql.*;
+import java.util.UUID;
+
 public class Database {
 
-	    private final String connectionUri;
-	    private final String username;
-	    private final String password;
-	    private Connection connection;
+    private final String connectionUri;
+    private final String username;
+    private final String password;
+    private Connection connection;
 
-	    public Database() throws ClassNotFoundException, SQLException {
-	        final String hostname = SkyWarsReloaded.get().getConfig().getString("sqldatabase.hostname");
-	        final int port = SkyWarsReloaded.get().getConfig().getInt("sqldatabase.port");
-	        final String database = SkyWarsReloaded.get().getConfig().getString("sqldatabase.database");
+    public Database() throws ClassNotFoundException, SQLException {
+        final String hostname = SkyWarsReloaded.get().getConfig().getString("sqldatabase.hostname");
+        final int port = SkyWarsReloaded.get().getConfig().getInt("sqldatabase.port");
+        final String database = SkyWarsReloaded.get().getConfig().getString("sqldatabase.database");
 
-	        connectionUri = String.format("jdbc:mysql://%s:%d/%s", hostname, port, database);
-	        username = SkyWarsReloaded.get().getConfig().getString("sqldatabase.username");
-	        password = SkyWarsReloaded.get().getConfig().getString("sqldatabase.password");
+        connectionUri = String.format("jdbc:mysql://%s:%d/%s", hostname, port, database);
+        username = SkyWarsReloaded.get().getConfig().getString("sqldatabase.username");
+        password = SkyWarsReloaded.get().getConfig().getString("sqldatabase.password");
 
-	        try {
-	            Class.forName("com.mysql.jdbc.Driver");
-	            connect();
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            connect();
 
-	        } catch (SQLException sqlException) {
-	            close();
-	            throw sqlException;
-	        }
-	    }
+        } catch (SQLException sqlException) {
+            close();
+            throw sqlException;
+        }
+    }
 
-	    private void connect() throws SQLException {
-	        if (connection != null) {
-	            try {
-	                connection.createStatement().execute("SELECT 1;");
+    private void connect() throws SQLException {
+        if (connection != null) {
+            try {
+                connection.createStatement().execute("SELECT 1;");
 
-	            } catch (SQLException sqlException) {
-	                if (sqlException.getSQLState().equals("08S01")) {
-	                    try {
-	                        connection.close();
+            } catch (SQLException sqlException) {
+                if (sqlException.getSQLState().equals("08S01")) {
+                    try {
+                        connection.close();
 
-	                    } catch (SQLException ignored) {
-	                    }
-	                }
-	            }
-	        }
+                    } catch (SQLException ignored) {
+                    }
+                }
+            }
+        }
 
-	        if (connection == null || connection.isClosed()) {
-	            connection = DriverManager.getConnection(connectionUri, username, password);
-	        }
-	    }
+        if (connection == null || connection.isClosed()) {
+            connection = DriverManager.getConnection(connectionUri, username, password);
+        }
+    }
 
-	    public Connection getConnection() {
-	        return connection;
-	    }
+    public Connection getConnection() {
+        return connection;
+    }
 
-	    public void close() {
-	        try {
-	            if (connection != null && !connection.isClosed()) {
-	                connection.close();
-	            }
+    private void close() {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
 
-	        } catch (SQLException ignored) {
+        } catch (SQLException ignored) {
 
-	        }
+        }
 
-	        connection = null;
-	    }
+        connection = null;
+    }
 
-	    public boolean checkConnection() {
-	        try {
-	            connect();
+    public boolean checkConnection() {
+        try {
+            connect();
 
-	        } catch (SQLException sqlException) {
-	            close();
-	            sqlException.printStackTrace();
+        } catch (SQLException sqlException) {
+            close();
+            sqlException.printStackTrace();
 
-	            return false;
-	        }
+            return true;
+        }
 
-	        return true;
-	    }
+        return false;
+    }
 
-	    public void createTables() throws IOException, SQLException {
-	        URL resource = Resources.getResource(SkyWarsReloaded.class, "/tables.sql");
-	        String[] databaseStructure = Resources.toString(resource, Charsets.UTF_8).split(";");
+    public void createTables() throws IOException, SQLException {
+        URL resource = Resources.getResource(SkyWarsReloaded.class, "/tables.sql");
+        String[] databaseStructure = Resources.toString(resource, Charsets.UTF_8).split(";");
 
-	        if (databaseStructure.length == 0) {
-	            return;
-	        }
+        if (databaseStructure.length == 0) {
+            return;
+        }
 
-	        Statement statement = null;
+        Statement statement = null;
 
-	        try {
-	            connection.setAutoCommit(false);
-	            statement = connection.createStatement();
+        try {
+            connection.setAutoCommit(false);
+            statement = connection.createStatement();
 
-	            for (String query : databaseStructure) {
-	                query = query.trim();
+            for (String query : databaseStructure) {
+                query = query.trim();
 
-	                if (query.isEmpty()) {
-	                    continue;
-	                }
+                if (query.isEmpty()) {
+                    continue;
+                }
 
-	                statement.execute(query);
-	            }
+                statement.execute(query);
+            }
 
-	            connection.commit();
+            connection.commit();
 
-	        } finally {
-	            connection.setAutoCommit(true);
+        } finally {
+            connection.setAutoCommit(true);
 
-	            if (statement != null && !statement.isClosed()) {
-	                statement.close();
-	            }
-	        }
-	    }
-	    
-	    public void addColumn(String name) throws IOException, SQLException {
-	        Statement statement = null;
-	        if (name.equalsIgnoreCase("playername")) {
-	        	try {
-		            connection.setAutoCommit(false);
-		            statement = connection.createStatement();
+            if (statement != null && !statement.isClosed()) {
+                statement.close();
+            }
+        }
+    }
 
-	                String query = "ALTER TABLE " + "swreloaded_player" + " ADD " + name + " VARCHAR(60) AFTER uuid";
-	                statement.execute(query);
+    public void addColumn(String name) throws SQLException {
+        Statement statement = null;
+        if (name.equalsIgnoreCase("playername")) {
+            try {
+                connection.setAutoCommit(false);
+                statement = connection.createStatement();
 
-		            connection.commit();
+                String query = "ALTER TABLE " + "swreloaded_player" + " ADD " + name + " VARCHAR(60) AFTER uuid";
+                statement.execute(query);
 
-		        } finally {
-		            connection.setAutoCommit(true);
+                connection.commit();
 
-		            if (statement != null && !statement.isClosed()) {
-		                statement.close();
-		            }
-		        }
-	        }
-	        if (name.equalsIgnoreCase("balance")) {
-	        	try {
-		            connection.setAutoCommit(false);
-		            statement = connection.createStatement();
+            } finally {
+                connection.setAutoCommit(true);
 
-	                String query = "ALTER TABLE " + "swreloaded_player" + " ADD " + name + " INT(6) AFTER score";
-	                statement.execute(query);
+                if (statement != null && !statement.isClosed()) {
+                    statement.close();
+                }
+            }
+        }
+        if (name.equalsIgnoreCase("balance")) {
+            try {
+                connection.setAutoCommit(false);
+                statement = connection.createStatement();
 
-		            connection.commit();
+                String query = "ALTER TABLE " + "swreloaded_player" + " ADD " + name + " INT(6) AFTER score";
+                statement.execute(query);
 
-		        } finally {
-		            connection.setAutoCommit(true);
+                connection.commit();
 
-		            if (statement != null && !statement.isClosed()) {
-		                statement.close();
-		            }
-		        }
-	        }
-	        if (name.equalsIgnoreCase("glasscolor")) {
-	        	try {
-		            connection.setAutoCommit(false);
-		            statement = connection.createStatement();
+            } finally {
+                connection.setAutoCommit(true);
 
-	                String query = "ALTER TABLE " + "swreloaded_player" + " ADD " + name + " VARCHAR(60) AFTER blocksplaced";
-	                statement.execute(query);
+                if (statement != null && !statement.isClosed()) {
+                    statement.close();
+                }
+            }
+        }
+        if (name.equalsIgnoreCase("glasscolor")) {
+            try {
+                connection.setAutoCommit(false);
+                statement = connection.createStatement();
 
-		            connection.commit();
+                String query = "ALTER TABLE " + "swreloaded_player" + " ADD " + name + " VARCHAR(60) AFTER blocksplaced";
+                statement.execute(query);
 
-		        } finally {
-		            connection.setAutoCommit(true);
+                connection.commit();
 
-		            if (statement != null && !statement.isClosed()) {
-		                statement.close();
-		            }
-		        }
-	        }
-	        if (name.equalsIgnoreCase("effect")) {
-	        	try {
-		            connection.setAutoCommit(false);
-		            statement = connection.createStatement();
+            } finally {
+                connection.setAutoCommit(true);
 
-	                String query = "ALTER TABLE " + "swreloaded_player" + " ADD " + name + " VARCHAR(60) AFTER glasscolor";
-	                statement.execute(query);
+                if (statement != null && !statement.isClosed()) {
+                    statement.close();
+                }
+            }
+        }
+        if (name.equalsIgnoreCase("effect")) {
+            try {
+                connection.setAutoCommit(false);
+                statement = connection.createStatement();
 
-		            connection.commit();
+                String query = "ALTER TABLE " + "swreloaded_player" + " ADD " + name + " VARCHAR(60) AFTER glasscolor";
+                statement.execute(query);
 
-		        } finally {
-		            connection.setAutoCommit(true);
+                connection.commit();
 
-		            if (statement != null && !statement.isClosed()) {
-		                statement.close();
-		            }
-		        }
-	        }
-	        if (name.equalsIgnoreCase("traileffect")) {
-	        	try {
-		            connection.setAutoCommit(false);
-		            statement = connection.createStatement();
+            } finally {
+                connection.setAutoCommit(true);
 
-	                String query = "ALTER TABLE " + "swreloaded_player" + " ADD " + name + " VARCHAR(60) AFTER effect";
-	                statement.execute(query);
+                if (statement != null && !statement.isClosed()) {
+                    statement.close();
+                }
+            }
+        }
+        if (name.equalsIgnoreCase("traileffect")) {
+            try {
+                connection.setAutoCommit(false);
+                statement = connection.createStatement();
 
-		            connection.commit();
+                String query = "ALTER TABLE " + "swreloaded_player" + " ADD " + name + " VARCHAR(60) AFTER effect";
+                statement.execute(query);
 
-		        } finally {
-		            connection.setAutoCommit(true);
+                connection.commit();
 
-		            if (statement != null && !statement.isClosed()) {
-		                statement.close();
-		            }
-		        }
-	        }
-	    }
+            } finally {
+                connection.setAutoCommit(true);
 
-	    
-	    public boolean doesPlayerExist(String uuid) {
-	        if (!checkConnection()) {
-	            return false;
-	        }
+                if (statement != null && !statement.isClosed()) {
+                    statement.close();
+                }
+            }
+        }
+    }
 
-	        int count = 0;
-	        PreparedStatement preparedStatement = null;
-	        ResultSet resultSet = null;
 
-	        try {
-	            StringBuilder queryBuilder = new StringBuilder();
-	            queryBuilder.append("SELECT Count(`player_id`) ");
-	            queryBuilder.append("FROM `swreloaded_player` ");
-	            queryBuilder.append("WHERE `uuid` = ? ");
-	            queryBuilder.append("LIMIT 1;");
+    public boolean doesPlayerExist(String uuid) {
+        if (checkConnection()) {
+            return true;
+        }
 
-	            preparedStatement = connection.prepareStatement(queryBuilder.toString());
-	            preparedStatement.setString(1, uuid);
-	            resultSet = preparedStatement.executeQuery();
+        int count = 0;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
 
-	            if (resultSet.next()) {
-	                count = resultSet.getInt(1);
-	            }
+        try {
+            String queryBuilder = "SELECT Count(`player_id`) " +
+                    "FROM `swreloaded_player` " +
+                    "WHERE `uuid` = ? " +
+                    "LIMIT 1;";
 
-	        } catch (final SQLException sqlException) {
-	            sqlException.printStackTrace();
+            preparedStatement = connection.prepareStatement(queryBuilder);
+            preparedStatement.setString(1, uuid);
+            resultSet = preparedStatement.executeQuery();
 
-	        } finally {
-	            if (resultSet != null) {
-	                try {
-	                    resultSet.close();
-	                } catch (final SQLException ignored) {
-	                }
-	            }
+            if (resultSet.next()) {
+                count = resultSet.getInt(1);
+            }
 
-	            if (preparedStatement != null) {
-	                try {
-	                    preparedStatement.close();
-	                } catch (final SQLException ignored) {
-	                }
-	            }
-	        }
+        } catch (final SQLException sqlException) {
+            sqlException.printStackTrace();
 
-	        return count > 0;
-	    }
+        } finally {
+            if (resultSet != null) {
+                try {
+                    resultSet.close();
+                } catch (final SQLException ignored) {
+                }
+            }
 
-	    public void createNewPlayer(String uid) {
-	        if (!checkConnection()) {
-	            return;
-	        }
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (final SQLException ignored) {
+                }
+            }
+        }
 
-	        UUID uuid = UUID.fromString(uid);
-	        PreparedStatement preparedStatement = null;
+        return count <= 0;
+    }
 
-	        try {
-	            StringBuilder queryBuilder = new StringBuilder();
-	            queryBuilder.append("INSERT INTO `swreloaded_player` ");
-	            queryBuilder.append("(`player_id`, `uuid`, `playername`, `first_seen`, `last_seen`) ");
-	            queryBuilder.append("VALUES ");
-	            queryBuilder.append("(NULL, ?, ?, NOW(), NOW());");
+    public void createNewPlayer(String uid) {
+        if (checkConnection()) {
+            return;
+        }
 
-	            preparedStatement = connection.prepareStatement(queryBuilder.toString());
-	            preparedStatement.setString(1, uid);
-	            preparedStatement.setString(2, SkyWarsReloaded.get().getServer().getPlayer(uuid).getName());
-	            preparedStatement.executeUpdate();
+        UUID uuid = UUID.fromString(uid);
+        PreparedStatement preparedStatement = null;
 
-	        } catch (final SQLException sqlException) {
-	            sqlException.printStackTrace();
+        try {
+            String queryBuilder = "INSERT INTO `swreloaded_player` " +
+                    "(`player_id`, `uuid`, `playername`, `first_seen`, `last_seen`) " +
+                    "VALUES " +
+                    "(NULL, ?, ?, NOW(), NOW());";
 
-	        } finally {
-	            if (preparedStatement != null) {
-	                try {
-	                    preparedStatement.close();
-	                } catch (final SQLException ignored) {
-	                }
-	            }
-	        }
-	    }
-	    
+            preparedStatement = connection.prepareStatement(queryBuilder);
+            preparedStatement.setString(1, uid);
+            preparedStatement.setString(2, SkyWarsReloaded.get().getServer().getPlayer(uuid).getName());
+            preparedStatement.executeUpdate();
+
+        } catch (final SQLException sqlException) {
+            sqlException.printStackTrace();
+
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (final SQLException ignored) {
+                }
+            }
+        }
+    }
+
 }

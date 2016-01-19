@@ -10,29 +10,29 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class LeaveCommand implements CommandExecutor {
-	@Override
-	public boolean onCommand(CommandSender sender, Command cmd,
-							 String commandLabel, String[] args) {
-		Player player = (Player) sender;
-		if (player.hasPermission("swr.quit")) {
-			GamePlayer gPlayer = SkyWarsReloaded.getPC().getPlayer(
-					player.getUniqueId());
-			if (gPlayer.inGame() && !gPlayer.isSpectating()) {
-				Game game = gPlayer.getGame();
-				game.deletePlayer(gPlayer, true, false);
-				return true;
-			} else if (SkyWarsReloaded.getCfg().spectatingEnabled()) {
-				if (gPlayer.isSpectating()) {
-					Game game = gPlayer.getGame();
-					gPlayer.spectateMode(false, game, game.getSpawn(), false);
-				}
-				return true;
-			}
-			return true;
-		} else {
-			player.sendMessage(ChatColor.RED
-					+ "You do not have permission to use swr.quit!");
-			return true;
-		}
-	}
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd,
+                             String commandLabel, String[] args) {
+        Player player = (Player) sender;
+        if (player.hasPermission("swr.quit")) {
+            GamePlayer gPlayer = SkyWarsReloaded.getPC().getPlayer(
+                    player.getUniqueId());
+            if (gPlayer.inGame() && !gPlayer.isSpectating()) {
+                Game game = gPlayer.getGame();
+                game.deletePlayer(gPlayer, true, false);
+                return true;
+            } else if (SkyWarsReloaded.getCfg().spectatingEnabled()) {
+                if (gPlayer.isSpectating()) {
+                    Game game = gPlayer.getGame();
+                    gPlayer.spectateMode(false, game, game.getSpawn(), false);
+                }
+                return true;
+            }
+            return true;
+        } else {
+            player.sendMessage(ChatColor.RED
+                    + "You do not have permission to use swr.quit!");
+            return true;
+        }
+    }
 }

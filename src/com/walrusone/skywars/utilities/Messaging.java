@@ -2,7 +2,6 @@ package com.walrusone.skywars.utilities;
 
 import com.google.common.collect.Maps;
 import com.walrusone.skywars.SkyWarsReloaded;
-
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -40,7 +39,7 @@ public final class Messaging {
         return COLOR_PATTERN.matcher(input).replaceAll("");
     }
 
-    public String getPrefix() {
+    private String getPrefix() {
         return storage.getString("prefix", "");
     }
 
@@ -50,6 +49,20 @@ public final class Messaging {
         }
 
         return null;
+    }
+
+    private void copyDefaults(File playerFile) {
+        FileConfiguration playerConfig = YamlConfiguration.loadConfiguration(playerFile);
+        Reader defConfigStream = new InputStreamReader(SkyWarsReloaded.get().getResource("messages.yml"));
+        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+        playerConfig.options().copyDefaults(true);
+        playerConfig.setDefaults(defConfig);
+        try {
+            playerConfig.save(playerFile);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     public static class MessageFormatter {
@@ -66,9 +79,9 @@ public final class Messaging {
         public MessageFormatter setVariable(String format, String value) {
             if (format != null && !format.isEmpty()) {
                 if (value == null) {
-                    variableMap.remove( format );
+                    variableMap.remove(format);
                 } else {
-                    variableMap.put( format, value );
+                    variableMap.put(format, value);
                 }
             }
             return this;
@@ -83,6 +96,7 @@ public final class Messaging {
                 message = SkyWarsReloaded.getMessaging().getMessage(message);
             }
 
+            assert message != null;
             Matcher matcher = PATTERN.matcher(message);
 
             while (matcher.find()) {
@@ -103,8 +117,8 @@ public final class Messaging {
 
             return ChatColor.translateAlternateColorCodes('&', message);
         }
-        
-        public String formatNoColor(String message) {
+
+        public String formatNoColor(@SuppressWarnings("SameParameterValue") String message) {
             if (message == null || message.isEmpty()) {
                 return "";
             }
@@ -113,6 +127,7 @@ public final class Messaging {
                 message = SkyWarsReloaded.getMessaging().getMessage(message);
             }
 
+            assert message != null;
             Matcher matcher = PATTERN.matcher(message);
 
             while (matcher.find()) {
@@ -135,20 +150,4 @@ public final class Messaging {
         }
     }
 
-	private void copyDefaults(File playerFile) {
-        FileConfiguration playerConfig = YamlConfiguration.loadConfiguration(playerFile);
-		Reader defConfigStream = new InputStreamReader(SkyWarsReloaded.get().getResource("messages.yml"));
-		if (defConfigStream != null) {
-			YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
-			playerConfig.options().copyDefaults(true);
-			playerConfig.setDefaults(defConfig);
-			try {
-				playerConfig.save(playerFile);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
-    
 }

@@ -4,8 +4,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class ShopItem {
 
-    private ItemStack item;
-    private int cost;
+    private final ItemStack item;
+    private final int cost;
 
     public ShopItem(ItemStack item, int cost) {
         this.item = item;

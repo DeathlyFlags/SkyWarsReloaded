@@ -4,9 +4,9 @@ import com.walrusone.skywars.SkyWarsReloaded;
 
 public class SavePlayers implements Runnable {
 
-	@Override
-	public void run() {
-		SkyWarsReloaded.getPC().savePlayersAsync();
-	}
+    @Override
+    public void run() {
+        SkyWarsReloaded.getPC().savePlayersAsync();
+    }
 
 }

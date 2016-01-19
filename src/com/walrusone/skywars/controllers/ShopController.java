@@ -6,7 +6,6 @@ import com.google.common.collect.Maps;
 import com.walrusone.skywars.SkyWarsReloaded;
 import com.walrusone.skywars.utilities.ItemUtils;
 import com.walrusone.skywars.utilities.ShopItem;
-
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -27,12 +26,12 @@ public class ShopController {
         load();
     }
 
-    public void load() {
+    private void load() {
         shopMap.clear();
         File shopFile = new File(SkyWarsReloaded.get().getDataFolder(), "shop.yml");
 
         if (!shopFile.exists()) {
-        	SkyWarsReloaded.get().saveResource("shop.yml", false);
+            SkyWarsReloaded.get().saveResource("shop.yml", false);
         }
 
         if (shopFile.exists()) {
@@ -40,26 +39,26 @@ public class ShopController {
 
             if (storage.contains("items")) {
                 for (String item : storage.getStringList("items")) {
-                    List<String> itemData = new LinkedList<String>(Arrays.asList(item.split(" ")));
+                    List<String> itemData = new LinkedList<>(Arrays.asList(item.split(" ")));
 
                     int cost = Integer.parseInt(itemData.get(0));
                     itemData.remove(itemData.get(0));
-                    
+
                     ItemStack itemStack = ItemUtils.parseItem(itemData);
-                    
-                    
+
+
                     if (itemStack != null) {
                         shopMap.put(ChatColor.stripColor(SkyWarsReloaded.getNMS().getName(itemStack)), new ShopItem(itemStack, cost));
                     }
                 }
             }
         }
-        
+
         specShopMap.clear();
         File specShopFile = new File(SkyWarsReloaded.get().getDataFolder(), "spectateshop.yml");
 
         if (!specShopFile.exists()) {
-        	SkyWarsReloaded.get().saveResource("spectateshop.yml", false);
+            SkyWarsReloaded.get().saveResource("spectateshop.yml", false);
         }
 
         if (specShopFile.exists()) {
@@ -67,14 +66,14 @@ public class ShopController {
 
             if (storage.contains("items")) {
                 for (String item : storage.getStringList("items")) {
-                    List<String> itemData = new LinkedList<String>(Arrays.asList(item.split(" ")));
+                    List<String> itemData = new LinkedList<>(Arrays.asList(item.split(" ")));
 
                     int cost = Integer.parseInt(itemData.get(0));
                     itemData.remove(itemData.get(0));
-                    
+
                     ItemStack itemStack = ItemUtils.parseItem(itemData);
-                    
-                    
+
+
                     if (itemStack != null) {
                         specShopMap.put(SkyWarsReloaded.getNMS().getName(itemStack), new ShopItem(itemStack, cost));
                     }
@@ -82,25 +81,23 @@ public class ShopController {
             }
         }
     }
-    
- 
+
 
     public ShopItem getByName(String name) {
         return shopMap.get(name);
     }
-    
+
     public ShopItem getBySpecName(String name) {
         return specShopMap.get(name);
     }
 
     public List<ShopItem> getShopItems() {
-    	return Lists.newArrayList(shopMap.values());
+        return Lists.newArrayList(shopMap.values());
     }
 
     public List<ShopItem> getSpecShopItems() {
-    	return Lists.newArrayList(specShopMap.values());
+        return Lists.newArrayList(specShopMap.values());
     }
-    
 
-    
+
 }

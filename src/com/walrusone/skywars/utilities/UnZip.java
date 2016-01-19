@@ -1,23 +1,22 @@
 package com.walrusone.skywars.utilities;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public class UnZip {
+class UnZip {
     /**
      * Size of the buffer to read/write data
      */
     private static final int BUFFER_SIZE = 4096;
+
+
     /**
      * Extracts a zip file specified by the zipFilePath to a directory specified by
      * destDirectory (will be created if does not exists)
-     * @param zipFilePath
-     * @param destDirectory
+     *
+     * @param zipFilePath   Path to the file
+     * @param destDirectory Destination directory
      * @throws IOException
      */
     public void unzip(String zipFilePath, String destDirectory) throws IOException {
@@ -43,16 +42,18 @@ public class UnZip {
         }
         zipIn.close();
     }
+
     /**
      * Extracts a zip entry (file entry)
-     * @param zipIn
-     * @param filePath
+     *
+     * @param zipIn    Zip Input to unzip
+     * @param filePath Path where the file will be unziped
      * @throws IOException
      */
     private void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath));
         byte[] bytesIn = new byte[BUFFER_SIZE];
-        int read = 0;
+        int read;
         while ((read = zipIn.read(bytesIn)) != -1) {
             bos.write(bytesIn, 0, read);
         }

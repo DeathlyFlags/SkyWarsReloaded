@@ -4,7 +4,7 @@ import java.util.List;
 
 public class StringUtils {
 
-    public static String toString(String[] args, char color1, char color2) {
+    private static String toString(String[] args, char color1, char color2) {
         StringBuilder stringBuilder = new StringBuilder();
 
         if (args.length > 1) {
@@ -29,11 +29,8 @@ public class StringUtils {
         return toString(args.toArray(new String[args.size()]), color1, color2);
     }
 
-    public static String formatScore(int score) {
-        return formatScore(score, "");
-    }
 
-    public static String formatScore(int score, String note) {
+    public static String formatScore(int score) {
         char color = '7';
 
         if (score > 0) {

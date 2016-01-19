@@ -5,14 +5,14 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 public class CheckForMinPlayers extends BukkitRunnable {
 
-	private Game game;
+    private final Game game;
 
-	public CheckForMinPlayers(Game game) {
-		this.game = game;
-	}
+    public CheckForMinPlayers(Game game) {
+        this.game = game;
+    }
 
-	@Override
-	public void run() {
-		game.prepareForStart();
-	}
+    @Override
+    public void run() {
+        game.prepareForStart();
+    }
 }
