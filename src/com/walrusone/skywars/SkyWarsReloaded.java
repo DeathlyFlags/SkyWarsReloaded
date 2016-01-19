@@ -1,18 +1,27 @@
 package com.walrusone.skywars;
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.logging.Logger;
-
+import com.google.common.io.ByteArrayDataInput;
+import com.google.common.io.ByteStreams;
+import com.walrusone.skywars.commands.CmdManager;
+import com.walrusone.skywars.commands.LeaveCommand;
+import com.walrusone.skywars.config.Config;
+import com.walrusone.skywars.controllers.*;
+import com.walrusone.skywars.dataStorage.DataStorage;
+import com.walrusone.skywars.dataStorage.Database;
+import com.walrusone.skywars.game.Game;
+import com.walrusone.skywars.game.GameMap;
+import com.walrusone.skywars.game.GamePlayer;
+import com.walrusone.skywars.listeners.*;
+import com.walrusone.skywars.nms.NMS;
+import com.walrusone.skywars.runnables.SavePlayers;
+import com.walrusone.skywars.utilities.BungeeUtil;
+import com.walrusone.skywars.utilities.LoggerFilter;
+import com.walrusone.skywars.utilities.Messaging;
+import com.walrusone.skywars.utilities.SaveDefaultMaps;
 import me.clip.deluxechat.placeholders.DeluxePlaceholderHook;
 import me.clip.deluxechat.placeholders.PlaceholderHandler;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
-
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -25,42 +34,13 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteStreams;
-import com.walrusone.skywars.commands.CmdManager;
-import com.walrusone.skywars.commands.LeaveCommand;
-import com.walrusone.skywars.config.Config;
-import com.walrusone.skywars.controllers.ChestController;
-import com.walrusone.skywars.controllers.GameController;
-import com.walrusone.skywars.controllers.GlassController;
-import com.walrusone.skywars.controllers.InventoryController;
-import com.walrusone.skywars.controllers.KitController;
-import com.walrusone.skywars.controllers.MapController;
-import com.walrusone.skywars.controllers.ParticleController;
-import com.walrusone.skywars.controllers.PlayerController;
-import com.walrusone.skywars.controllers.ProjectileController;
-import com.walrusone.skywars.controllers.ScoreboardController;
-import com.walrusone.skywars.controllers.ShopController;
-import com.walrusone.skywars.controllers.WorldController;
-import com.walrusone.skywars.dataStorage.DataStorage;
-import com.walrusone.skywars.dataStorage.Database;
-import com.walrusone.skywars.game.Game;
-import com.walrusone.skywars.game.GameMap;
-import com.walrusone.skywars.game.GamePlayer;
-import com.walrusone.skywars.listeners.IconMenuController;
-import com.walrusone.skywars.listeners.LobbyListener;
-import com.walrusone.skywars.listeners.PingListener;
-import com.walrusone.skywars.listeners.PlayerListener;
-import com.walrusone.skywars.listeners.ProjectileListener;
-import com.walrusone.skywars.listeners.SignListener;
-import com.walrusone.skywars.listeners.SpectatorListener;
-import com.walrusone.skywars.nms.NMS;
-import com.walrusone.skywars.runnables.CheckForMinPlayers;
-import com.walrusone.skywars.runnables.SavePlayers;
-import com.walrusone.skywars.utilities.BungeeUtil;
-import com.walrusone.skywars.utilities.LoggerFilter;
-import com.walrusone.skywars.utilities.Messaging;
-import com.walrusone.skywars.utilities.SaveDefaultMaps;
+import java.io.File;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.logging.Logger;
 
 public class SkyWarsReloaded extends JavaPlugin implements
 		PluginMessageListener {
@@ -171,8 +151,9 @@ public class SkyWarsReloaded extends JavaPlugin implements
 				.getPlugin("HolographicDisplays").isEnabled());
 		try {
 			loadDeluxeChatPlaceholders();
-		} catch(Exception e) {
-			Bukkit.getLogger().severe("Problem loading DeluxeChat Placeholders.");
+		} catch (Exception e) {
+			Bukkit.getLogger().severe(
+					"Problem loading DeluxeChat Placeholders.");
 			e.printStackTrace();
 		}
 
@@ -299,9 +280,6 @@ public class SkyWarsReloaded extends JavaPlugin implements
 					this);
 		}
 
-		Bukkit.getScheduler().scheduleSyncRepeatingTask(this,
-				new CheckForMinPlayers(), 20L, 20L);
-
 		int saveInterval = getConfig().getInt("sqldatabase.saveInterval");
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(this,
 				new SavePlayers(), 0, (1200 * saveInterval));
@@ -398,23 +376,22 @@ public class SkyWarsReloaded extends JavaPlugin implements
 	}
 
 	public static boolean deleteFolder(File file) {
-		if (file.exists()) {
-			boolean result = true;
+		if (!file.exists())
+			return false;
+		boolean result = true;
 
-			if (file.isDirectory()) {
-				File[] contents = file.listFiles();
+		if (file.isDirectory()) {
+			File[] contents = file.listFiles();
 
-				if (contents != null) {
-					for (File f : contents) {
-						result = result && deleteFolder(f);
-					}
+			if (contents != null) {
+				for (File f : contents) {
+					result = result && deleteFolder(f);
 				}
 			}
-
-			return result && file.delete();
 		}
 
-		return false;
+		return result && file.delete();
+
 	}
 
 	public boolean loadingEnded() {
@@ -667,8 +644,7 @@ public class SkyWarsReloaded extends JavaPlugin implements
 	private void loadDeluxeChatPlaceholders() {
 		if (!Bukkit.getPluginManager().getPlugin("DeluxeChat").isEnabled())
 			return;
-		getLogger().info(
-				"DeluxeChat was found!");
+		getLogger().info("DeluxeChat was found!");
 		boolean hooked = PlaceholderHandler.registerPlaceholderHook(this,
 				new DeluxePlaceholderHook() {
 					/*

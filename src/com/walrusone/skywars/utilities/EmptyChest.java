@@ -4,11 +4,17 @@ public class EmptyChest {
 	private int x;
 	private int z;
 	private int y;
-	
-	public EmptyChest(int x, int y, int z) {
+	private boolean dble;
+
+	public EmptyChest(int x, int y, int z, boolean dble) {
 		this.x = x;
 		this.z = z;
 		this.y = y;
+		this.dble = dble;
+	}
+
+	public EmptyChest(int x, int y, int z) {
+		this(x, y, z, false);
 	}
 	
 	public int getX() {
@@ -21,6 +27,14 @@ public class EmptyChest {
 	
 	public int getY() {
 		return y;
+	}
+
+	public boolean isDble() {
+		return dble;
+	}
+
+	public void setDble(boolean dble) {
+		this.dble = dble;
 	}
 	
 }

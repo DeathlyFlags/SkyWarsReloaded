@@ -1,32 +1,17 @@
 package com.walrusone.skywars.game;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
-import org.bukkit.Color;
-import org.bukkit.Effect;
-import org.bukkit.FireworkEffect;
+import com.walrusone.skywars.SkyWarsReloaded;
+import com.walrusone.skywars.api.GameEndEvent;
+import com.walrusone.skywars.runnables.CheckForMinPlayers;
+import com.walrusone.skywars.utilities.*;
+import org.bukkit.*;
 import org.bukkit.FireworkEffect.Type;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
-import org.bukkit.entity.Entity;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Firework;
-import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
@@ -35,21 +20,11 @@ import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Score;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.ScoreboardManager;
+import org.bukkit.scoreboard.*;
 import org.bukkit.util.Vector;
 
-import com.walrusone.skywars.SkyWarsReloaded;
-import com.walrusone.skywars.api.GameEndEvent;
-import com.walrusone.skywars.powerups.PowerUpTask;
-import com.walrusone.skywars.utilities.BungeeUtil;
-import com.walrusone.skywars.utilities.EmptyChest;
-import com.walrusone.skywars.utilities.GlassColor;
-import com.walrusone.skywars.utilities.Messaging;
-import com.walrusone.skywars.utilities.StringUtils;
+import java.io.File;
+import java.util.*;
 
 public class Game {
 
@@ -83,9 +58,8 @@ public class Game {
 
 	public Game(int gameNumber, String map) {
 		this.gameNumber = gameNumber;
-		if (SkyWarsReloaded.getCfg().signJoinMode()) {
+		if (SkyWarsReloaded.getCfg().signJoinMode())
 			mapName = map;
-		}
 		int size = SkyWarsReloaded.getCfg().getMaxMapSize() / 2;
 		min = 0 - size;
 		max = 0 + size;
@@ -99,6 +73,9 @@ public class Game {
 		gameState = GameState.PREGAME;
 		prepareGameMap();
 		prepareScoreBoard();
+
+		task = new CheckForMinPlayers(this).runTaskTimer(SkyWarsReloaded.get(),
+				20, 20);
 	}
 
 	public void prepareGameMap() {
@@ -109,69 +86,70 @@ public class Game {
 			int random = (int) (Math.random() * numberOfMaps) + 1;
 			mapName = shuffleMaps.get(random - 1);
 		}
+
 		gameMap = SkyWarsReloaded.getMC().getMap(mapName);
 		boolean gameLoad = gameMap.loadMap(this.gameNumber);
-		mapWorld = SkyWarsReloaded.get().getServer()
-				.getWorld(mapName + "_" + this.gameNumber);
+
 		if (gameLoad) {
+			mapWorld = SkyWarsReloaded.get().getServer()
+					.getWorld(mapName + "_" + this.gameNumber);
+
 			numberOfSpawns = gameMap.getSpawns().size();
+
 			if (SkyWarsReloaded.getCfg().spectatingEnabled()) {
-				double x = gameMap.getSpawns().get(1).getX() + 0.5;
-				double y = gameMap.getSpawns().get(1).getY();
-				double z = gameMap.getSpawns().get(1).getZ() + 0.5;
-				specSpawn = new Location(mapWorld, x, y, z);
+				Location sp = gameMap.getSpawns().get(1);
+				specSpawn = new Location(mapWorld, sp.getX() + 0.5, sp.getY(),
+						sp.getZ() + 0.5);
 			}
+
 			minPlayers = (int) (numberOfSpawns
 					* SkyWarsReloaded.getCfg().getMinPercentPlayers() / 100);
-			if (minPlayers < 1) {
+			if (minPlayers < 1)
 				minPlayers = 1;
-			}
-			for (int i = 1; i <= numberOfSpawns; i++) {
-				availableSpawns.put(i, null);
-			}
-			createSpawnPlatform();
-		} else {
-			endGame();
-		}
 
+			for (int i = 1; i <= numberOfSpawns; i++)
+				availableSpawns.put(i, null);
+
+			spawnPlatform(true);
+		} else
+			endGame();
 	}
-	
+
 	public GameState getGameState() {
 		return gameState;
 	}
-	
+
 	public GameMap getGameMap() {
 		return gameMap;
 	}
 
 	public void addPlayer(GamePlayer gPlayer) {
-		if (gPlayers.size() >= numberOfSpawns || gPlayers.contains(gPlayer)) {
+		if (gPlayers.size() >= numberOfSpawns || gPlayers.contains(gPlayer))
 			return;
-		} else {
-			if (gPlayer.getP() != null) {
-				gPlayer.getP().setFlying(false);
-				gPlayers.add(gPlayer);
-				kills.put(gPlayer, 0);
-				gPlayer.setGame(gameNumber);
-				gPlayer.setInGame(true);
-				if (SkyWarsReloaded.getCfg().bungeeEnabled()) {
-					BungeeUtil.sendSignUpdateRequest(this);
-				}
-				if (SkyWarsReloaded.getCfg().signJoinMode()) {
-					SkyWarsReloaded.getGC().updateSign(gameNumber);
-				}
-				SkyWarsReloaded.getInvC().add(gPlayer.getP());
-				preparePlayerForLobby(gPlayer);
-				if (SkyWarsReloaded.getCfg().resetTimerEnabled()) {
-					if (SkyWarsReloaded.getCfg().getResetTimerThreshold() >= (gPlayers
-							.size() / numberOfSpawns)) {
-						count = 0;
-					}
-				}
-			}
-		}
+
+		if (gPlayer.getP() == null)
+			return;
+
+		gPlayer.getP().setFlying(false);
+		gPlayers.add(gPlayer);
+		kills.put(gPlayer, 0);
+		gPlayer.setGame(gameNumber);
+		gPlayer.setInGame(true);
+
+		if (SkyWarsReloaded.getCfg().bungeeEnabled())
+			BungeeUtil.sendSignUpdateRequest(this);
+		if (SkyWarsReloaded.getCfg().signJoinMode())
+			SkyWarsReloaded.getGC().updateSign(gameNumber);
+
+		SkyWarsReloaded.getInvC().add(gPlayer.getP());
+		preparePlayerForLobby(gPlayer);
+		if (SkyWarsReloaded.getCfg().resetTimerEnabled())
+			if (SkyWarsReloaded.getCfg().getResetTimerThreshold() >= (gPlayers
+					.size() / numberOfSpawns))
+				count = 0;
+
 	}
-	
+
 	public void removePlayer(GamePlayer gPlayer) {
 		gPlayers.remove(gPlayer);
 		if (gPlayer.getP() != null)
@@ -179,122 +157,89 @@ public class Game {
 	}
 
 	private void preparePlayerForLobby(final GamePlayer gPlayer) {
-		Location location;
-		int spawn = getAvailableSpawn(); // iDK IF THIS FIXES IT BUT WHATEVER.
-		location = new Location(mapWorld,
-				gameMap.getSpawns().get(spawn).getX() + 0.5, gameMap
-						.getSpawns().get(spawn).getY() + 1, gameMap.getSpawns()
-						.get(spawn).getZ() + 0.5);
-		availableSpawns.put(spawn, gPlayer);
-		gPlayer.getP().teleport(location, TeleportCause.PLUGIN);
+		int spawnId = getAvailableSpawn(); // iDK IF THIS FIXES IT BUT WHATEVER.
+		Location spawn = gameMap.getSpawns().get(spawnId);
+		Location loc = new Location(mapWorld, spawn.getX() + 0.5,
+				spawn.getY() + 1, spawn.getZ() + 0.5);
+		availableSpawns.put(spawnId, gPlayer);
+
+		gPlayer.getP().teleport(loc, TeleportCause.PLUGIN);
+
 		SkyWarsReloaded.get().getServer().getScheduler()
 				.scheduleSyncDelayedTask(SkyWarsReloaded.get(), new Runnable() {
 					public void run() {
-						if (gPlayer.getP() != null) {
-							gPlayer.getP().getInventory().clear();
-							gPlayer.getP().getInventory().setHelmet(null);
-							gPlayer.getP().getInventory().setChestplate(null);
-							gPlayer.getP().getInventory().setLeggings(null);
-							gPlayer.getP().getInventory().setBoots(null);
-							gPlayer.getP().setLevel(0);
-							gPlayer.getP().setExp(0);
-							gPlayer.getP().setHealth(20);
-							gPlayer.getP().setFoodLevel(20);
-							gPlayer.getP().setFlying(false);
-							gPlayer.setOpVote(0);
-							gPlayer.setWeatherVote(0);
-							gPlayer.setTimeVote(0);
-							gPlayer.setJumpVote(0);
-							SkyWarsReloaded.getNMS().sendTitle(
-									gPlayer.getP(),
-									20,
-									60,
-									20,
-									new Messaging.MessageFormatter()
-											.setVariable("mapname", mapName)
-											.formatNoColor(
-													"titles.joinGameTitle"),
-									SkyWarsReloaded.getMessaging().getMessage(
-											"titles.joinGameSubtitle"));
-							for (PotionEffect effect : gPlayer.getP()
-									.getActivePotionEffects()) {
-								gPlayer.getP().removePotionEffect(
-										effect.getType());
-							}
-							gPlayer.getP().setGameMode(GameMode.ADVENTURE);
-							scoreboardData.put(gPlayer.getP().getName(), 1);
-							gPlayer.getP().setScoreboard(
-									SkyWarsReloaded.get().getServer()
-											.getScoreboardManager()
-											.getNewScoreboard());
-							gPlayer.getP().setScoreboard(scoreboard);
-							updateScoreboard();
-							gPlayer.getP()
-									.getInventory()
-									.setItem(
-											SkyWarsReloaded.getCfg()
-													.getExitItemSlot(),
-											SkyWarsReloaded.getCfg()
-													.getExitGameItem());
-							if (SkyWarsReloaded.getCfg().optionsMenuEnabled()) {
-								gPlayer.getP()
-										.getInventory()
-										.setItem(
-												SkyWarsReloaded.getCfg()
-														.getOptionsItemSlot(),
-												SkyWarsReloaded.getCfg()
-														.getOptionsItem());
-							}
-							if (SkyWarsReloaded.getCfg().kitsEnabled()) {
-								gPlayer.getP()
-										.getInventory()
-										.setItem(
-												SkyWarsReloaded.getCfg()
-														.getKitMenuItemSlot(),
-												SkyWarsReloaded.getCfg()
-														.getKitMenuItem());
-							}
-							String color = gPlayer.getGlass();
-							if (color == null) {
-								color = "normal";
-							}
-							if (!color.equalsIgnoreCase("normal")) {
-								GlassColor colorGlass = SkyWarsReloaded
-										.getGLC().getByColor(color);
-								if (colorGlass != null) {
-									setGlass(colorGlass.getMaterial(),
-											colorGlass.getData(), gPlayer);
-								} else {
-									setGlass(Material.GLASS, gPlayer);
-								}
-							} else {
+						if (gPlayer.getP() == null)
+							return;
+						Player p = gPlayer.getP();
+						gPlayer.clearPlayer();
+						SkyWarsReloaded.getNMS().sendTitle(
+								p,
+								20,
+								60,
+								20,
+								new Messaging.MessageFormatter().setVariable(
+										"mapname", mapName).formatNoColor(
+										"titles.joinGameTitle"),
+								SkyWarsReloaded.getMessaging().getMessage(
+										"titles.joinGameSubtitle"));
+
+						scoreboardData.put(p.getName(), 1);
+						p.setScoreboard(SkyWarsReloaded.get().getServer()
+								.getScoreboardManager().getNewScoreboard());
+						p.setScoreboard(scoreboard);
+						updateScoreboard();
+
+						p.getInventory().setItem(
+								SkyWarsReloaded.getCfg().getExitItemSlot(),
+								SkyWarsReloaded.getCfg().getExitGameItem());
+
+						if (SkyWarsReloaded.getCfg().optionsMenuEnabled())
+							p.getInventory().setItem(
+									SkyWarsReloaded.getCfg()
+											.getOptionsItemSlot(),
+									SkyWarsReloaded.getCfg().getOptionsItem());
+
+						if (SkyWarsReloaded.getCfg().kitsEnabled())
+							p.getInventory().setItem(
+									SkyWarsReloaded.getCfg()
+											.getKitMenuItemSlot(),
+									SkyWarsReloaded.getCfg().getKitMenuItem());
+
+						String color = gPlayer.getGlass();
+						if (!color.equalsIgnoreCase("normal")) {
+							GlassColor colorGlass = SkyWarsReloaded.getGLC()
+									.getByColor(color);
+							if (colorGlass != null)
+								setGlass(colorGlass.getMaterial(),
+										colorGlass.getData(), gPlayer);
+							else
 								setGlass(Material.GLASS, gPlayer);
-							}
-						}
+
+						} else
+							setGlass(Material.GLASS, gPlayer);
+
 					}
 				}, 5);
+
 		sendGameMessage(new Messaging.MessageFormatter().withPrefix()
 				.setVariable("number", "" + gPlayers.size())
 				.setVariable("total", "" + numberOfSpawns)
 				.setVariable("player", gPlayer.getP().getName())
 				.format("game.lobby-join"));
+
 		playSound(SkyWarsReloaded.getCfg().getJoinSound());
 	}
 
 	private int getAvailableSpawn() {
-		for (int spawn : availableSpawns.keySet()) {
-			if (availableSpawns.get(spawn) == null) {
-				return spawn;
-			}
-		}
-		return 1;
+		return availableSpawns.entrySet().stream()
+				.filter(e -> e.getValue() == null).map(Map.Entry::getKey)
+				.findFirst().orElse(1);
 	}
 
 	private void killMobs() {
-		for (Entity entity : mapWorld.getEntities()) {
-			if (entity instanceof Monster)
-				entity.remove();
-		}
+		mapWorld.getEntities().stream()
+				.filter(ent -> !(ent instanceof ArmorStand))
+				.forEach(ent -> ent.remove());
 	}
 
 	private void fillChests() {
@@ -304,44 +249,31 @@ public class Game {
 
 		String vote = SkyWarsReloaded.getCfg().getDefaultChest();
 		for (GamePlayer gPlayer : getPlayers()) {
-			if (gPlayer.getOpVote() == 1) {
+			if (gPlayer.getOpVote() == 1)
 				votesForBasic++;
-			} else if (gPlayer.getOpVote() == 2) {
+			else if (gPlayer.getOpVote() == 2)
 				votesForNormal++;
-			} else if (gPlayer.getOpVote() == 3) {
+			else if (gPlayer.getOpVote() == 3)
 				votesForOP++;
-			}
 		}
 
-		if (votesForBasic > votesForNormal && votesForBasic > votesForOP) {
+		if (votesForBasic > votesForNormal && votesForBasic > votesForOP)
 			vote = "basic";
-		} else if (votesForNormal > votesForBasic
-				&& votesForNormal > votesForOP) {
+		else if (votesForNormal > votesForBasic && votesForNormal > votesForOP)
 			vote = "normal";
-		} else if (votesForOP > votesForBasic && votesForOP > votesForNormal) {
+		else if (votesForOP > votesForBasic && votesForOP > votesForNormal)
 			vote = "op";
-		}
 
-		for (EmptyChest eChest : gameMap.getChests().values()) {
-			Location loc;
-			int x = eChest.getX();
-			int y = eChest.getY();
-			int z = eChest.getZ();
-			loc = new Location(mapWorld, x, y, z);
+		for (EmptyChest eChest : gameMap.getChests()) {
+			Location loc = new Location(mapWorld, eChest.getX(), eChest.getY(),
+					eChest.getZ());
 			Chest chest = (Chest) loc.getBlock().getState();
-			SkyWarsReloaded.getCC().populateChest(chest, vote);
-		}
-
-		for (EmptyChest eChest : gameMap.getDoubleChests().values()) {
-			Location loc;
-			int x = eChest.getX();
-			int y = eChest.getY();
-			int z = eChest.getZ();
-			loc = new Location(mapWorld, x, y, z);
-			Chest chest = (Chest) loc.getBlock().getState();
-			InventoryHolder ih = chest.getInventory().getHolder();
-			DoubleChest dc = (DoubleChest) ih;
-			SkyWarsReloaded.getCC().populateDoubleChest(dc, vote);
+			if (eChest.isDble()) {
+				InventoryHolder ih = chest.getInventory().getHolder();
+				DoubleChest dc = (DoubleChest) ih;
+				SkyWarsReloaded.getCC().populateDoubleChest(dc, vote);
+			} else
+				SkyWarsReloaded.getCC().populateChest(chest, vote);
 		}
 	}
 
@@ -495,7 +427,7 @@ public class Game {
 		}
 		killMobs();
 		fillChests();
-		removeSpawnHousing();
+		spawnPlatform(false);
 		for (GamePlayer gPlayer : getPlayers()) {
 			if (gPlayer.getP() != null) {
 				gPlayer.getP().setGameMode(GameMode.SURVIVAL);
@@ -530,10 +462,10 @@ public class Game {
 		if (SkyWarsReloaded.getCfg().weatherVoteEnabled()) {
 			setWeather();
 		}
-		int puTime = SkyWarsReloaded.getCfg().getSpawnPowerUpsTime();
+		/*int puTime = SkyWarsReloaded.getCfg().getSpawnPowerUpsTime();
 
 		if (puTime > 0)
-			setTask(new PowerUpTask(this).runTaskTimer(SkyWarsReloaded.get(), puTime * 20, puTime * 20));
+			setTask(new PowerUpTask(this).runTaskTimer(SkyWarsReloaded.get(), puTime * 20, puTime * 20));*/
 	}
 
 	public void endGame() {
@@ -559,11 +491,6 @@ public class Game {
 			}
 		}
 
-		for (Entity entity : mapWorld.getEntities()) {
-			if (entity != null) {
-				entity.remove();
-			}
-		}
 		if (!SkyWarsReloaded.getCfg().spectatingEnabled() && !shutdown) {
 			SkyWarsReloaded
 					.get()
@@ -580,11 +507,10 @@ public class Game {
 			deleteGame();
 		}
 	}
-
 	private void prepareScoreBoard() {
-		if (scoreboard != null) {
+		if (scoreboard != null)
 			resetScoreboard();
-		}
+
 		ScoreboardManager manager = SkyWarsReloaded.get().getServer()
 				.getScoreboardManager();
 		scoreboard = manager.getNewScoreboard();
@@ -597,9 +523,9 @@ public class Game {
 	}
 
 	private void updateScoreboard() {
-		if (objective != null) {
+		if (objective != null)
 			objective.unregister();
-		}
+
 		objective = scoreboard.registerNewObjective("info", "dummy");
 		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 		String leaderboard = new Messaging.MessageFormatter().setVariable(
@@ -625,60 +551,40 @@ public class Game {
 	}
 
 	private void resetScoreboard() {
-		if (objective != null) {
+		if (objective != null)
 			objective.unregister();
-		}
 
-		if (scoreboard != null) {
+		if (scoreboard != null)
 			scoreboard = null;
-		}
 	}
 
 	public void deletePlayer(final GamePlayer gplayer, boolean playerQuit,
 			boolean hardQuit) {
+
 		if (gPlayers.contains(gplayer)) {
 			gPlayers.remove(gplayer);
 			kills.remove(gplayer);
 		}
-		if (playerQuit) {
+
+		if (playerQuit)
 			playerQuit(gplayer);
-		}
-		if (!hardQuit) {
+
+		if (!hardQuit)
 			preparePlayerForExit(gplayer);
-		}
+
 		if (gameState == GameState.PREGAME || gameState == GameState.PLAYING) {
-			if (SkyWarsReloaded.getCfg().bungeeEnabled() && !shutdown) {
+			if (SkyWarsReloaded.getCfg().bungeeEnabled() && !shutdown)
 				BungeeUtil.sendSignUpdateRequest(this);
-			}
-			if (SkyWarsReloaded.getCfg().signJoinMode() && !shutdown) {
+
+			if (SkyWarsReloaded.getCfg().signJoinMode() && !shutdown)
 				SkyWarsReloaded.getGC().updateSign(gameNumber);
-			}
-		}
-		if (SkyWarsReloaded.getCfg().bungeeEnabled() && !shutdown && !hardQuit) {
-			if (gplayer.getP() != null) {
-				gplayer.getP().teleport(SkyWarsReloaded.getCfg().getSpawn(),
-						TeleportCause.PLUGIN);
-				SkyWarsReloaded
-						.get()
-						.getServer()
-						.getScheduler()
-						.scheduleSyncDelayedTask(SkyWarsReloaded.get(),
-								new Runnable() {
-									public void run() {
-										SkyWarsReloaded.getInvC()
-												.restoreInventory(
-														gplayer.getP());
-										BungeeUtil.connectToServer(gplayer
-												.getP(), SkyWarsReloaded
-												.getCfg().getLobbyServer());
-									}
-								}, 5);
-			}
-		} else {
-			if (gplayer.getP() != null) {
-				gplayer.getP().teleport(SkyWarsReloaded.getCfg().getSpawn(),
-						TeleportCause.PLUGIN);
-				if (!shutdown) {
+
+			if (SkyWarsReloaded.getCfg().bungeeEnabled() && !shutdown
+					&& !hardQuit) {
+				if (gplayer.getP() != null) {
+					gplayer.getP().teleport(
+							SkyWarsReloaded.getCfg().getSpawn(),
+							TeleportCause.PLUGIN);
 					SkyWarsReloaded
 							.get()
 							.getServer()
@@ -686,22 +592,37 @@ public class Game {
 							.scheduleSyncDelayedTask(SkyWarsReloaded.get(),
 									new Runnable() {
 										public void run() {
-											if (gplayer.getP() != null) {
-												SkyWarsReloaded.getInvC()
-														.restoreInventory(
-																gplayer.getP());
-												SkyWarsReloaded.getScore()
-														.getScoreboard(
-																gplayer.getP());
-											}
+											SkyWarsReloaded.getInvC()
+													.restoreInventory(
+															gplayer.getP());
+											BungeeUtil.connectToServer(gplayer
+													.getP(), SkyWarsReloaded
+													.getCfg().getLobbyServer());
 										}
 									}, 5);
 				}
 			}
+		} else {
+			if (gplayer.getP() != null) {
+				gplayer.getP().teleport(SkyWarsReloaded.getCfg().getSpawn(),
+						TeleportCause.PLUGIN);
+				if (!shutdown) {
+					/*
+					 * SkyWarsReloaded .get() .getServer() .getScheduler()
+					 * .scheduleSyncDelayedTask(SkyWarsReloaded.get(), new
+					 * Runnable() {
+					 * 
+					 * @Override public void run() { if (gplayer.getP() != null)
+					 * { SkyWarsReloaded.getInvC() .restoreInventory(
+					 * gplayer.getP()); SkyWarsReloaded.getScore()
+					 * .getScoreboard( gplayer.getP()); } } }, 5);
+					 */
+				}
+			}
 		}
-		if (gameState == GameState.PLAYING) {
+
+		if (gameState == GameState.PLAYING)
 			checkForWinner();
-		}
 	}
 
 	public void shutdown() {
@@ -786,49 +707,40 @@ public class Game {
 	}
 
 	private void preparePlayerForExit(GamePlayer gplayer) {
-		if (gplayer.getP() != null) {
-			gplayer.setInGame(false);
-			gplayer.setKitSelected(false);
-			gplayer.getP().getInventory().clear();
-			gplayer.setOpVote(0);
-			gplayer.setWeatherVote(0);
-			gplayer.setTimeVote(0);
-			gplayer.setJumpVote(0);
-			gplayer.getP().setScoreboard(
-					SkyWarsReloaded.get().getServer().getScoreboardManager()
-							.getNewScoreboard());
-			for (PotionEffect effect : gplayer.getP().getActivePotionEffects()) {
-				gplayer.getP().removePotionEffect(effect.getType());
-			}
-			gplayer.getP().setFireTicks(0);
-			gplayer.setGame(-1);
-		}
+		if (gplayer.getP() != null)
+			return;
+		gplayer.setInGame(false);
+		gplayer.setKitSelected(false);
+		gplayer.getP().getInventory().clear();
+		gplayer.setOpVote(0);
+		gplayer.setWeatherVote(0);
+		gplayer.setTimeVote(0);
+		gplayer.setJumpVote(0);
+		gplayer.getP().setScoreboard(
+				SkyWarsReloaded.get().getServer().getScoreboardManager()
+						.getNewScoreboard());
+		for (PotionEffect effect : gplayer.getP().getActivePotionEffects())
+			gplayer.getP().removePotionEffect(effect.getType());
+
+		gplayer.getP().setFireTicks(0);
+		gplayer.setGame(-1);
+
 	}
 
-	public Boolean playerExists(GamePlayer name) {
-		for (GamePlayer gPlayer : gPlayers) {
-			if (name.getUUID().toString()
-					.equalsIgnoreCase(gPlayer.getUUID().toString())) {
-				return true;
-			}
-		}
-		return false;
+	public List<GamePlayer> getPlayers() {
+		return new ArrayList<GamePlayer>(gPlayers);
 	}
 
-	public ArrayList<GamePlayer> getPlayers() {
-		ArrayList<GamePlayer> players = new ArrayList<GamePlayer>();
-		for (GamePlayer g : gPlayers) {
-			players.add(g);
-		}
-		return players;
+	public List<GamePlayer> getSpectators() {
+		return new ArrayList<GamePlayer>(spectators);
 	}
 
-	public ArrayList<GamePlayer> getSpectators() {
-		ArrayList<GamePlayer> players = new ArrayList<GamePlayer>();
-		for (GamePlayer g : spectators) {
-			players.add(g);
-		}
-		return players;
+	public Set<GamePlayer> getAllPlayers() {
+		Set<GamePlayer> gPlayers = new HashSet<>();
+		gPlayers.addAll(getPlayers());
+		gPlayers.addAll(getSpectators());
+
+		return gPlayers;
 	}
 
 	public void deleteGame() {
@@ -843,13 +755,12 @@ public class Game {
 		workingDirectory = new File(workingDirectory,
 				"/plugins/WorldGuard/worlds/");
 		File[] contents = workingDirectory.listFiles();
-		if (contents != null) {
-			for (File file : contents) {
-				if (!file.isDirectory() || !file.getName().matches(name)) {
-					continue;
-				}
-				SkyWarsReloaded.getWC().deleteWorld(file);
-			}
+		if (contents == null)
+			return;
+		for (File file : contents) {
+			if (!file.isDirectory() || !file.getName().matches(name))
+				continue;
+			SkyWarsReloaded.getWC().deleteWorld(file);
 		}
 	}
 
@@ -858,56 +769,32 @@ public class Game {
 	}
 
 	public Boolean isFull() {
-		if (gPlayers.size() >= numberOfSpawns) {
-			return true;
-		} else {
-			return false;
-		}
+		return gPlayers.size() >= numberOfSpawns;
 	}
 
-	public void createSpawnPlatform() {
-		for (int spawn : gameMap.getSpawns().keySet()) {
-			int x = gameMap.getSpawns().get(spawn).getBlockX();
-			int y = gameMap.getSpawns().get(spawn).getBlockY();
-			int z = gameMap.getSpawns().get(spawn).getBlockZ();
+	public void spawnPlatform(boolean creating) {
+		Material mat = Material.GLASS;
+		if (!creating)
+			mat = Material.AIR;
+		for (Location spawn : gameMap.getSpawns().values()) {
+			int x = spawn.getBlockX();
+			int y = spawn.getBlockY();
+			int z = spawn.getBlockZ();
 
-			mapWorld.getBlockAt(x, y, z).setType(Material.GLASS);
-			mapWorld.getBlockAt(x, y + 1, z + 1).setType(Material.GLASS);
-			mapWorld.getBlockAt(x, y + 1, z - 1).setType(Material.GLASS);
-			mapWorld.getBlockAt(x + 1, y + 1, z).setType(Material.GLASS);
-			mapWorld.getBlockAt(x - 1, y + 1, z).setType(Material.GLASS);
-			mapWorld.getBlockAt(x, y + 2, z + 1).setType(Material.GLASS);
-			mapWorld.getBlockAt(x, y + 2, z - 1).setType(Material.GLASS);
-			mapWorld.getBlockAt(x + 1, y + 2, z).setType(Material.GLASS);
-			mapWorld.getBlockAt(x - 1, y + 2, z).setType(Material.GLASS);
-			mapWorld.getBlockAt(x, y + 3, z + 1).setType(Material.GLASS);
-			mapWorld.getBlockAt(x, y + 3, z - 1).setType(Material.GLASS);
-			mapWorld.getBlockAt(x + 1, y + 3, z).setType(Material.GLASS);
-			mapWorld.getBlockAt(x - 1, y + 3, z).setType(Material.GLASS);
-			mapWorld.getBlockAt(x, y + 4, z).setType(Material.GLASS);
-		}
-	}
-
-	public void removeSpawnHousing() {
-		for (int spawn : gameMap.getSpawns().keySet()) {
-			int x = gameMap.getSpawns().get(spawn).getBlockX();
-			int y = gameMap.getSpawns().get(spawn).getBlockY();
-			int z = gameMap.getSpawns().get(spawn).getBlockZ();
-
-			mapWorld.getBlockAt(x, y, z).setType(Material.AIR);
-			mapWorld.getBlockAt(x, y + 1, z + 1).setType(Material.AIR);
-			mapWorld.getBlockAt(x, y + 1, z - 1).setType(Material.AIR);
-			mapWorld.getBlockAt(x + 1, y + 1, z).setType(Material.AIR);
-			mapWorld.getBlockAt(x - 1, y + 1, z).setType(Material.AIR);
-			mapWorld.getBlockAt(x, y + 2, z + 1).setType(Material.AIR);
-			mapWorld.getBlockAt(x, y + 2, z - 1).setType(Material.AIR);
-			mapWorld.getBlockAt(x + 1, y + 2, z).setType(Material.AIR);
-			mapWorld.getBlockAt(x - 1, y + 2, z).setType(Material.AIR);
-			mapWorld.getBlockAt(x, y + 3, z + 1).setType(Material.AIR);
-			mapWorld.getBlockAt(x, y + 3, z - 1).setType(Material.AIR);
-			mapWorld.getBlockAt(x + 1, y + 3, z).setType(Material.AIR);
-			mapWorld.getBlockAt(x - 1, y + 3, z).setType(Material.AIR);
-			mapWorld.getBlockAt(x, y + 4, z).setType(Material.AIR);
+			mapWorld.getBlockAt(x, y, z).setType(mat);
+			mapWorld.getBlockAt(x, y + 1, z + 1).setType(mat);
+			mapWorld.getBlockAt(x, y + 1, z - 1).setType(mat);
+			mapWorld.getBlockAt(x + 1, y + 1, z).setType(mat);
+			mapWorld.getBlockAt(x - 1, y + 1, z).setType(mat);
+			mapWorld.getBlockAt(x, y + 2, z + 1).setType(mat);
+			mapWorld.getBlockAt(x, y + 2, z - 1).setType(mat);
+			mapWorld.getBlockAt(x + 1, y + 2, z).setType(mat);
+			mapWorld.getBlockAt(x - 1, y + 2, z).setType(mat);
+			mapWorld.getBlockAt(x, y + 3, z + 1).setType(mat);
+			mapWorld.getBlockAt(x, y + 3, z - 1).setType(mat);
+			mapWorld.getBlockAt(x + 1, y + 3, z).setType(mat);
+			mapWorld.getBlockAt(x - 1, y + 3, z).setType(mat);
+			mapWorld.getBlockAt(x, y + 4, z).setType(mat);
 		}
 	}
 
@@ -1017,165 +904,145 @@ public class Game {
 	}
 
 	public void checkForWinner() {
-		if (gameState == GameState.PLAYING) {
-			if (getPlayers().size() == 1) {
-				gameState = GameState.ENDING;
-				if (SkyWarsReloaded.getCfg().bungeeEnabled()) {
-					BungeeUtil.sendSignUpdateRequest(this);
-				}
-				if (SkyWarsReloaded.getCfg().signJoinMode()) {
-					SkyWarsReloaded.getGC().updateSign(gameNumber);
-				}
-				GamePlayer gPlayer = getPlayers().get(0);
-				gPlayers.remove(gPlayer);
-				kills.remove(gPlayer);
-				preparePlayerForExit(gPlayer);
-				gPlayer.setWins(gPlayer.getWins() + 1);
-				gPlayer.setGamesPlayed(gPlayer.getGamesPlayed() + 1);
-				playSound(SkyWarsReloaded.getCfg().getWinSound());
-				if (gPlayer.getP() != null) {
-					Location loc = gPlayer.getP().getEyeLocation();
-					launchFireworkDisplay(mapWorld, loc);
-				}
-				int winTotal = SkyWarsReloaded.getCfg().getWinValue();
-				if (gPlayer.getP() != null) {
-					if (gPlayer.getP().hasPermission("swr.vip")) {
-						winTotal = SkyWarsReloaded.getCfg().getWinValue()
-								* SkyWarsReloaded.getCfg().getVIPMultiplier();
-					} else {
-						winTotal = SkyWarsReloaded.getCfg().getWinValue();
+		if (gameState != GameState.PLAYING)
+			return;
+		if (getPlayers().size() == 1)
+			gameState = GameState.ENDING;
+		if (SkyWarsReloaded.getCfg().bungeeEnabled())
+			BungeeUtil.sendSignUpdateRequest(this);
+		if (SkyWarsReloaded.getCfg().signJoinMode())
+			SkyWarsReloaded.getGC().updateSign(gameNumber);
+
+		GamePlayer gPlayer = getPlayers().get(0);
+		gPlayers.remove(gPlayer);
+		kills.remove(gPlayer);
+
+		preparePlayerForExit(gPlayer);
+
+		gPlayer.setWins(gPlayer.getWins() + 1);
+		gPlayer.setGamesPlayed(gPlayer.getGamesPlayed() + 1);
+		playSound(SkyWarsReloaded.getCfg().getWinSound());
+
+		if (gPlayer.getP() != null) {
+			Location loc = gPlayer.getP().getEyeLocation();
+			launchFireworkDisplay(mapWorld, loc);
+		}
+
+		int winTotal = SkyWarsReloaded.getCfg().getWinValue();
+
+		if (gPlayer.getP() != null) {
+			if (gPlayer.getP().hasPermission("swr.vip")) {
+				winTotal = SkyWarsReloaded.getCfg().getWinValue()
+						* SkyWarsReloaded.getCfg().getVIPMultiplier();
+			} else
+				winTotal = SkyWarsReloaded.getCfg().getWinValue();
+		}
+
+		gPlayer.setScore(gPlayer.getScore() + winTotal);
+		addBalance(gPlayer, winTotal);
+		Bukkit.getServer().getPluginManager()
+				.callEvent(new GameEndEvent(gPlayer.getP(), mapName));
+
+		if (SkyWarsReloaded.getCfg().spectatingEnabled()) {
+			if (gPlayer.getP() != null) {
+				gPlayer.spectateMode(true, this, gPlayer.getP().getLocation(),
+						shutdown);
+				sendGameMessage(new Messaging.MessageFormatter()
+						.withPrefix()
+						.setVariable(
+								"time",
+								""
+										+ SkyWarsReloaded.getCfg()
+										.getTimeAfterGame()
+
+						).format("game.gameEnding"));
+
+				SkyWarsReloaded
+						.get()
+						.getServer()
+						.getScheduler()
+						.scheduleSyncDelayedTask(
+								SkyWarsReloaded.get(),
+								new Runnable() {
+									@Override
+									public void run() {
+										endGame();
+									}
+								},
+								20 * SkyWarsReloaded.getCfg()
+										.getTimeAfterGame());
+			} else {
+				deletePlayer(gPlayer, false, false);
+				endGame();
+			}
+
+			if (SkyWarsReloaded.getCfg().WinBroadcastDisabled()) {
+				sendGameMessage(new Messaging.MessageFormatter()
+						.setVariable("player", gPlayer.getName())
+						.withPrefix()
+						.setVariable("player_score",
+								StringUtils.formatScore(winTotal))
+						.setVariable("mapname", mapName).format("game.win"));
+			} else {
+				for (GamePlayer gamePlayer : SkyWarsReloaded.getPC().getAll()) {
+					if (gamePlayer.getP() != null) {
+						gamePlayer.getP().sendMessage(
+								new Messaging.MessageFormatter()
+										.setVariable("player",
+												gPlayer.getName())
+										.withPrefix()
+										.setVariable(
+												"player_score",
+												StringUtils
+														.formatScore(winTotal))
+										.setVariable("mapname", mapName)
+										.format("game.win"));
 					}
-				}
-				gPlayer.setScore(gPlayer.getScore() + winTotal);
-				addBalance(gPlayer, winTotal);
-				Bukkit.getServer().getPluginManager()
-						.callEvent(new GameEndEvent(gPlayer.getP(), mapName));
-				if (SkyWarsReloaded.getCfg().spectatingEnabled()) {
-					if (gPlayer.getP() != null) {
-						gPlayer.spectateMode(true, this, gPlayer.getP()
-								.getLocation(), shutdown);
-						sendGameMessage(new Messaging.MessageFormatter()
-								.withPrefix()
-								.setVariable(
-										"time",
-										""
-												+ SkyWarsReloaded.getCfg()
-														.getTimeAfterGame())
-								.format("game.gameEnding"));
-					}
-					SkyWarsReloaded
-							.get()
-							.getServer()
-							.getScheduler()
-							.scheduleSyncDelayedTask(
-									SkyWarsReloaded.get(),
-									new Runnable() {
-										public void run() {
-											endGame();
-										}
-									},
-									20 * SkyWarsReloaded.getCfg()
-											.getTimeAfterGame());
-				} else {
-					deletePlayer(gPlayer, false, false);
-					endGame();
-				}
-				if (SkyWarsReloaded.getCfg().WinBroadcastDisabled()) {
-					sendGameMessage(new Messaging.MessageFormatter()
-							.setVariable("player", gPlayer.getName())
-							.withPrefix()
-							.setVariable("player_score",
-									StringUtils.formatScore(winTotal))
-							.setVariable("mapname", mapName).format("game.win"));
-				} else {
-					for (GamePlayer gamePlayer : SkyWarsReloaded.getPC()
-							.getAll()) {
-						if (gamePlayer.getP() != null) {
-							gamePlayer
-									.getP()
-									.sendMessage(
-											new Messaging.MessageFormatter()
-													.setVariable("player",
-															gPlayer.getName())
-													.withPrefix()
-													.setVariable(
-															"player_score",
-															StringUtils
-																	.formatScore(winTotal))
-													.setVariable("mapname",
-															mapName)
-													.format("game.win"));
-						}
-					}
-				}
-			} else if (getPlayers().size() < 1) {
-				gameState = GameState.ENDING;
-				if (SkyWarsReloaded.getCfg().bungeeEnabled()) {
-					BungeeUtil.sendSignUpdateRequest(this);
-				}
-				if (SkyWarsReloaded.getCfg().signJoinMode()) {
-					SkyWarsReloaded.getGC().updateSign(gameNumber);
-				}
-				if (SkyWarsReloaded.getCfg().spectatingEnabled()) {
-					sendGameMessage(new Messaging.MessageFormatter()
-							.withPrefix()
-							.setVariable(
-									"time",
-									""
-											+ SkyWarsReloaded.getCfg()
-													.getTimeAfterGame())
-							.format("game.gameEnding"));
-					SkyWarsReloaded
-							.get()
-							.getServer()
-							.getScheduler()
-							.scheduleSyncDelayedTask(
-									SkyWarsReloaded.get(),
-									new Runnable() {
-										public void run() {
-											endGame();
-										}
-									},
-									20 * SkyWarsReloaded.getCfg()
-											.getTimeAfterGame());
-				} else {
-					endGame();
 				}
 			}
+		} else if (getPlayers().size() < 1) {
+			gameState = GameState.ENDING;
+			if (SkyWarsReloaded.getCfg().bungeeEnabled())
+				BungeeUtil.sendSignUpdateRequest(this);
+			if (SkyWarsReloaded.getCfg().signJoinMode())
+				SkyWarsReloaded.getGC().updateSign(gameNumber);
+
+			if (SkyWarsReloaded.getCfg().spectatingEnabled()) {
+				sendGameMessage(new Messaging.MessageFormatter()
+						.withPrefix()
+						.setVariable(
+								"time",
+								""
+										+ SkyWarsReloaded.getCfg()
+										.getTimeAfterGame())
+						.format("game.gameEnding"));
+				SkyWarsReloaded
+						.get()
+						.getServer()
+						.getScheduler()
+						.scheduleSyncDelayedTask(
+								SkyWarsReloaded.get(),
+								new Runnable() {
+									public void run() {
+										endGame();
+									}
+								},
+								20 * SkyWarsReloaded.getCfg()
+										.getTimeAfterGame());
+			} else
+				endGame();
+
 		}
 	}
 
 	private void sendGameMessage(String message) {
-		for (GamePlayer gPlayer : getPlayers()) {
-			if (gPlayer.getP() != null) {
-				gPlayer.getP().sendMessage(message);
-			}
-		}
-		if (SkyWarsReloaded.getCfg().spectatingEnabled()) {
-			for (GamePlayer spectator : getSpectators()) {
-				if (spectator.getP() != null) {
-					spectator.getP().sendMessage(message);
-				}
-			}
-		}
+		getAllPlayers().stream().map(GamePlayer::getP)
+				.forEach(p -> p.sendMessage(message));
 	}
 
 	public void playSound(Sound sound) {
-		for (GamePlayer gamePlayer : getPlayers()) {
-			if (gamePlayer.getP() != null) {
-				gamePlayer.getP().playSound(gamePlayer.getP().getLocation(),
-						sound, 1, 1);
-			}
-		}
-		for (GamePlayer gamePlayer : getSpectators()) {
-			if (!gPlayers.contains(gamePlayer)) {
-				if (gamePlayer.getP() != null) {
-					gamePlayer.getP().playSound(
-							gamePlayer.getP().getLocation(), sound, 1, 1);
-				}
-
-			}
-		}
+		getAllPlayers().stream().map(GamePlayer::getP)
+				.forEach(p -> p.playSound(p.getLocation(), sound, 1, 1));
 	}
 
 	private String getDeathMessage(DamageCause dCause, boolean withHelp,
@@ -1575,27 +1442,26 @@ public class Game {
 		int votesForThunder = 0;
 		int votesForSnow = 0;
 		for (GamePlayer gPlayer : getPlayers()) {
-			if (gPlayer.getWeatherVote() == 1) {
+			if (gPlayer.getWeatherVote() == 1)
 				votesForSunny++;
-			} else if (gPlayer.getWeatherVote() == 2) {
+			else if (gPlayer.getWeatherVote() == 2)
 				votesForRain++;
-			} else if (gPlayer.getWeatherVote() == 3) {
+			else if (gPlayer.getWeatherVote() == 3)
 				votesForThunder++;
-			} else if (gPlayer.getWeatherVote() == 4) {
+			else if (gPlayer.getWeatherVote() == 4)
 				votesForSnow++;
-			}
 		}
+
 		if (votesForSunny >= votesForRain && votesForSunny >= votesForThunder
-				&& votesForSunny >= votesForSnow) {
+				&& votesForSunny >= votesForSnow)
 			return "sunny";
-		} else if (votesForRain >= votesForThunder
-				&& votesForRain >= votesForSnow) {
+		else if (votesForRain >= votesForThunder
+				&& votesForRain >= votesForSnow)
 			return "rain";
-		} else if (votesForThunder >= votesForSnow) {
+		else if (votesForThunder >= votesForSnow)
 			return "thunder storm";
-		} else {
+		else
 			return "snow";
-		}
 	}
 
 	private void setJump() {
@@ -1636,132 +1502,104 @@ public class Game {
 		int votesForHigh = 0;
 		int votesForSuper = 0;
 		int votesForGod = 0;
+
 		for (GamePlayer gPlayer : getPlayers()) {
-			if (gPlayer.getJumpVote() == 1) {
+			if (gPlayer.getJumpVote() == 1)
 				votesForNormal++;
-			} else if (gPlayer.getJumpVote() == 2) {
+			else if (gPlayer.getJumpVote() == 2)
 				votesForHigh++;
-			} else if (gPlayer.getJumpVote() == 3) {
+			else if (gPlayer.getJumpVote() == 3)
 				votesForSuper++;
-			} else if (gPlayer.getJumpVote() == 4) {
+			else if (gPlayer.getJumpVote() == 4)
 				votesForGod++;
-			}
 		}
+
 		if (votesForNormal >= votesForHigh && votesForNormal >= votesForSuper
-				&& votesForNormal >= votesForGod) {
+				&& votesForNormal >= votesForGod)
 			return "normal";
-		} else if (votesForHigh >= votesForSuper && votesForHigh >= votesForGod) {
+		else if (votesForHigh >= votesForSuper && votesForHigh >= votesForGod)
 			return "high jump";
-		} else if (votesForSuper >= votesForGod) {
+		else if (votesForSuper >= votesForGod)
 			return "super jump";
-		} else {
+		else
 			return "god jump";
-		}
 	}
 
 	private void removeBalance(GamePlayer p, int x) {
-		if (SkyWarsReloaded.getCfg().usingExternalEcomony()) {
+		if (SkyWarsReloaded.getCfg().usingExternalEcomony())
 			SkyWarsReloaded.econ.withdrawPlayer(SkyWarsReloaded.get()
 					.getServer().getOfflinePlayer(p.getUUID()), x);
-		} else {
+		else
 			p.setBalance(p.getBalance() - x);
-		}
 	}
 
 	private void addBalance(GamePlayer p, int x) {
-		if (SkyWarsReloaded.getCfg().usingExternalEcomony()) {
+		if (SkyWarsReloaded.getCfg().usingExternalEcomony())
 			SkyWarsReloaded.econ.depositPlayer(SkyWarsReloaded.get()
 					.getServer().getOfflinePlayer(p.getUUID()), x);
-		} else {
+		else
 			p.setBalance(p.getBalance() + x);
-		}
 	}
 
 	public int getPlayerSpawn(GamePlayer gPlayer) {
-		for (int spawn : availableSpawns.keySet()) {
-			if (availableSpawns.get(spawn) == gPlayer) {
-				return spawn;
-			}
-		}
-		return -1;
+		return availableSpawns.entrySet().stream()
+				.filter(e -> e.getValue() == gPlayer).map(Map.Entry::getKey)
+				.findFirst().orElse(-1);
 	}
 
 	public void setGlass(Material color, GamePlayer gPlayer) {
-		if (containsPlayer(gPlayer.getP()) && gameState == GameState.PREGAME) {
-			Material material = color;
-
-			int spawn = getPlayerSpawn(gPlayer);
-			if (spawn != -1) {
-				int x = gameMap.getSpawns().get(spawn).getBlockX();
-				int y = gameMap.getSpawns().get(spawn).getBlockY();
-				int z = gameMap.getSpawns().get(spawn).getBlockZ();
-
-				mapWorld.getBlockAt(x, y, z).setType(material);
-				mapWorld.getBlockAt(x, y + 1, z + 1).setType(material);
-				mapWorld.getBlockAt(x, y + 1, z - 1).setType(material);
-				mapWorld.getBlockAt(x + 1, y + 1, z).setType(material);
-				mapWorld.getBlockAt(x - 1, y + 1, z).setType(material);
-				mapWorld.getBlockAt(x, y + 2, z + 1).setType(material);
-				mapWorld.getBlockAt(x, y + 2, z - 1).setType(material);
-				mapWorld.getBlockAt(x + 1, y + 2, z).setType(material);
-				mapWorld.getBlockAt(x - 1, y + 2, z).setType(material);
-				mapWorld.getBlockAt(x, y + 3, z + 1).setType(material);
-				mapWorld.getBlockAt(x, y + 3, z - 1).setType(material);
-				mapWorld.getBlockAt(x + 1, y + 3, z).setType(material);
-				mapWorld.getBlockAt(x - 1, y + 3, z).setType(material);
-				mapWorld.getBlockAt(x, y + 4, z).setType(material);
-			}
-		}
+		setGlass(color, (byte) 0, gPlayer);
 	}
 
 	@SuppressWarnings("deprecation")
 	public void setGlass(Material color, byte data, GamePlayer gPlayer) {
-		if (containsPlayer(gPlayer.getP()) && gameState == GameState.PREGAME) {
-			Material material = color;
+		if (!containsPlayer(gPlayer.getP()) || gameState != GameState.PREGAME)
+			return;
+		Material material = color;
 
-			int spawn = getPlayerSpawn(gPlayer);
-			if (spawn != -1) {
-				int x = gameMap.getSpawns().get(spawn).getBlockX();
-				int y = gameMap.getSpawns().get(spawn).getBlockY();
-				int z = gameMap.getSpawns().get(spawn).getBlockZ();
+		int spawn = getPlayerSpawn(gPlayer);
+		if (spawn == -1)
+			return;
+		int x = gameMap.getSpawns().get(spawn).getBlockX();
+		int y = gameMap.getSpawns().get(spawn).getBlockY();
+		int z = gameMap.getSpawns().get(spawn).getBlockZ();
 
-				mapWorld.getBlockAt(x, y, z).setType(material);
-				mapWorld.getBlockAt(x, y, z).setData(data);
-				mapWorld.getBlockAt(x, y + 1, z + 1).setType(material);
-				mapWorld.getBlockAt(x, y + 1, z + 1).setData(data);
-				mapWorld.getBlockAt(x, y + 1, z - 1).setType(material);
-				mapWorld.getBlockAt(x, y + 1, z - 1).setData(data);
-				mapWorld.getBlockAt(x + 1, y + 1, z).setType(material);
-				mapWorld.getBlockAt(x + 1, y + 1, z).setData(data);
-				mapWorld.getBlockAt(x - 1, y + 1, z).setType(material);
-				mapWorld.getBlockAt(x - 1, y + 1, z).setData(data);
-				mapWorld.getBlockAt(x, y + 2, z + 1).setType(material);
-				mapWorld.getBlockAt(x, y + 2, z + 1).setData(data);
-				mapWorld.getBlockAt(x, y + 2, z - 1).setType(material);
-				mapWorld.getBlockAt(x, y + 2, z - 1).setData(data);
-				mapWorld.getBlockAt(x + 1, y + 2, z).setType(material);
-				mapWorld.getBlockAt(x + 1, y + 2, z).setData(data);
-				mapWorld.getBlockAt(x - 1, y + 2, z).setType(material);
-				mapWorld.getBlockAt(x - 1, y + 2, z).setData(data);
-				mapWorld.getBlockAt(x, y + 3, z + 1).setType(material);
-				mapWorld.getBlockAt(x, y + 3, z + 1).setData(data);
-				mapWorld.getBlockAt(x, y + 3, z - 1).setType(material);
-				mapWorld.getBlockAt(x, y + 3, z - 1).setData(data);
-				mapWorld.getBlockAt(x + 1, y + 3, z).setType(material);
-				mapWorld.getBlockAt(x + 1, y + 3, z).setData(data);
-				mapWorld.getBlockAt(x - 1, y + 3, z).setType(material);
-				mapWorld.getBlockAt(x - 1, y + 3, z).setData(data);
-				mapWorld.getBlockAt(x, y + 4, z).setType(material);
-				mapWorld.getBlockAt(x, y + 4, z).setData(data);
-			}
-		}
+		mapWorld.getBlockAt(x, y, z).setType(material);
+		mapWorld.getBlockAt(x, y + 1, z + 1).setType(material);
+		mapWorld.getBlockAt(x, y + 1, z - 1).setType(material);
+		mapWorld.getBlockAt(x + 1, y + 1, z).setType(material);
+		mapWorld.getBlockAt(x - 1, y + 1, z).setType(material);
+		mapWorld.getBlockAt(x, y + 2, z + 1).setType(material);
+		mapWorld.getBlockAt(x, y + 2, z - 1).setType(material);
+		mapWorld.getBlockAt(x + 1, y + 2, z).setType(material);
+		mapWorld.getBlockAt(x - 1, y + 2, z).setType(material);
+		mapWorld.getBlockAt(x, y + 3, z + 1).setType(material);
+		mapWorld.getBlockAt(x, y + 3, z - 1).setType(material);
+		mapWorld.getBlockAt(x + 1, y + 3, z).setType(material);
+		mapWorld.getBlockAt(x - 1, y + 3, z).setType(material);
+		mapWorld.getBlockAt(x, y + 4, z).setType(material);
+		if (data == 0)
+			return;
+		mapWorld.getBlockAt(x, y, z).setData(data);
+		mapWorld.getBlockAt(x, y + 1, z + 1).setData(data);
+		mapWorld.getBlockAt(x, y + 1, z - 1).setData(data);
+		mapWorld.getBlockAt(x + 1, y + 1, z).setData(data);
+		mapWorld.getBlockAt(x - 1, y + 1, z).setData(data);
+		mapWorld.getBlockAt(x, y + 2, z + 1).setData(data);
+		mapWorld.getBlockAt(x, y + 2, z - 1).setData(data);
+		mapWorld.getBlockAt(x + 1, y + 2, z).setData(data);
+		mapWorld.getBlockAt(x - 1, y + 2, z).setData(data);
+		mapWorld.getBlockAt(x, y + 3, z + 1).setData(data);
+		mapWorld.getBlockAt(x, y + 3, z - 1).setData(data);
+		mapWorld.getBlockAt(x + 1, y + 3, z).setData(data);
+		mapWorld.getBlockAt(x - 1, y + 3, z).setData(data);
+		mapWorld.getBlockAt(x, y + 4, z).setData(data);
 	}
 
 	private void updateExpBar(Integer lvl) {
 		for (GamePlayer gpl : gPlayers) {
-			// 1.00 es a SkyWarsReloaded.getCfg().preGameTimer()
-			// lo que X es a lvl
-			// X = lvl * 1.00 / SkyWarsReloaded.getCfg().preGameTimer()
+			if (gpl.getP() == null)
+				continue;
 			gpl.getP().setExp(lvl / SkyWarsReloaded.getCfg().preGameTimer());
 			gpl.getP().setLevel(lvl);
 		}

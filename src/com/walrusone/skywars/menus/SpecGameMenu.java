@@ -1,20 +1,18 @@
 package com.walrusone.skywars.menus;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.common.collect.Lists;
+import com.walrusone.skywars.SkyWarsReloaded;
+import com.walrusone.skywars.game.Game;
+import com.walrusone.skywars.game.Game.GameState;
+import com.walrusone.skywars.game.GamePlayer;
+import com.walrusone.skywars.utilities.IconMenu;
+import com.walrusone.skywars.utilities.Messaging;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
-import com.google.common.collect.Lists;
-import com.walrusone.skywars.SkyWarsReloaded;
-import com.walrusone.skywars.game.Game;
-import com.walrusone.skywars.game.GamePlayer;
-import com.walrusone.skywars.game.Game.GameState;
-import com.walrusone.skywars.utilities.IconMenu;
-import com.walrusone.skywars.utilities.Messaging;
+import java.util.List;
 
 public class SpecGameMenu {
 
@@ -72,10 +70,10 @@ public class SpecGameMenu {
             }
         });
 
-        ArrayList<Game> games = SkyWarsReloaded.getGC().getGames();
-        
-        for (int iii = 0; iii < games.size(); iii++) {
-            if (iii >= menuSize) {
+		List<Game> games = SkyWarsReloaded.getGC().getGames();
+
+		for (int iii = 0; iii < games.size(); iii++) {
+			if (iii >= menuSize) {
                 break;
             }
 
@@ -126,10 +124,10 @@ public class SpecGameMenu {
 		if (!SkyWarsReloaded.getIC().has(gamePlayer.getP()) || gamePlayer.isSpectating() || !SkyWarsReloaded.getIC().getMenu(gamePlayer.getP()).getName().equalsIgnoreCase(menuName)) {
 			return;
 		} else {
-	        ArrayList<Game> games = SkyWarsReloaded.getGC().getGames();
-	        
-	        for (int iii = 0; iii < games.size(); iii++) {
-	            if (iii >= menuSize) {
+			List<Game> games = SkyWarsReloaded.getGC().getGames();
+
+			for (int iii = 0; iii < games.size(); iii++) {
+				if (iii >= menuSize) {
 	                break;
 	            }
 

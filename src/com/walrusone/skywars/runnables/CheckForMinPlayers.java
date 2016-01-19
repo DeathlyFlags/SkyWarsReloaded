@@ -1,15 +1,18 @@
 package com.walrusone.skywars.runnables;
 
-import com.walrusone.skywars.SkyWarsReloaded;
 import com.walrusone.skywars.game.Game;
+import org.bukkit.scheduler.BukkitRunnable;
 
-public class CheckForMinPlayers implements Runnable {
+public class CheckForMinPlayers extends BukkitRunnable {
+
+	private Game game;
+
+	public CheckForMinPlayers(Game game) {
+		this.game = game;
+	}
 
 	@Override
 	public void run() {
-		for(Game game: SkyWarsReloaded.getGC().getGames()) {
-    		game.prepareForStart();
-    	}
+		game.prepareForStart();
 	}
-
 }
