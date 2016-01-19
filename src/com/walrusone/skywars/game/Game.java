@@ -55,6 +55,8 @@ public class Game {
     private int numberOfSpawns;
     private boolean shutdown = false;
     private Location specSpawn;
+    @SuppressWarnings("unused")
+    BukkitTask checkMinPlayerTask = new CheckForMinPlayers(this).runTaskTimer(SkyWarsReloaded.get(), 20, 20);
 
     public Game(int gameNumber, String map) {
         this.gameNumber = gameNumber;
@@ -74,8 +76,6 @@ public class Game {
         gameState = GameState.PREGAME;
         prepareGameMap();
         prepareScoreBoard();
-        @SuppressWarnings("UnusedAssignment") BukkitTask checkMinPlayerTask = new CheckForMinPlayers(this).runTaskTimer(SkyWarsReloaded.get(),
-                20, 20);
     }
 
     private void prepareGameMap() {
@@ -122,6 +122,12 @@ public class Game {
     }
 
     public void addPlayer(GamePlayer gPlayer) {
+        if (isFull()) return;
+        if (gameState == GameState.PLAYING) {
+            gPlayer.spectateMode(true, this, this.getSpawn(), false);
+            addSpectator(gPlayer);
+        }
+        if (gameState != GameState.PREGAME) return;
         if (gPlayers.size() >= numberOfSpawns || gPlayers.contains(gPlayer))
             return;
         if (gPlayer.getP() == null) return;
@@ -144,12 +150,6 @@ public class Game {
                 count = 0;
             }
         }
-    }
-
-    public void removePlayer(GamePlayer gPlayer) {
-        gPlayers.remove(gPlayer);
-        if (gPlayer.getP() != null)
-            SkyWarsReloaded.getScore().getScoreboard(gPlayer.getP());
     }
 
     private void preparePlayerForLobby(final GamePlayer gPlayer) {
@@ -637,42 +637,40 @@ public class Game {
             if (!gPlayer.isSpectating()) {
                 if ((System.currentTimeMillis() - gPlayer.getTagged().getTime()) < 10000
                         && killer != gPlayer) {
-                    if (killer != gPlayer) {
-                        killer.setKills(killer.getKills() + 1);
-                        kills.put(killer, kills.get(killer) + 1);
-                        gPlayer.setDeaths(gPlayer.getDeaths() + 1);
-                        int killTotal = SkyWarsReloaded.getCfg().getKillValue();
-                        if (killer.getP() != null) {
-                            if (killer.getP().hasPermission("swr.vip")) {
-                                killTotal = SkyWarsReloaded.getCfg()
-                                        .getKillValue()
-                                        * SkyWarsReloaded.getCfg()
-                                        .getVIPMultiplier();
-                            } else {
-                                killTotal = SkyWarsReloaded.getCfg()
-                                        .getKillValue();
-                            }
+                    killer.setKills(killer.getKills() + 1);
+                    kills.put(killer, kills.get(killer) + 1);
+                    gPlayer.setDeaths(gPlayer.getDeaths() + 1);
+                    int killTotal = SkyWarsReloaded.getCfg().getKillValue();
+                    if (killer.getP() != null) {
+                        if (killer.getP().hasPermission("swr.vip")) {
+                            killTotal = SkyWarsReloaded.getCfg()
+                                    .getKillValue()
+                                    * SkyWarsReloaded.getCfg()
+                                    .getVIPMultiplier();
+                        } else {
+                            killTotal = SkyWarsReloaded.getCfg()
+                                    .getKillValue();
                         }
-                        killer.setScore(killer.getScore() + killTotal);
-                        gPlayer.setScore(gPlayer.getScore()
-                                - SkyWarsReloaded.getCfg().getDeathValue());
-                        addBalance(killer, killTotal);
-                        removeBalance(gPlayer, SkyWarsReloaded.getCfg()
-                                .getDeathValue());
-                        sendGameMessage(new Messaging.MessageFormatter()
-                                .withPrefix()
-                                .setVariable("player", gPlayer.getName())
-                                .setVariable(
-                                        "player_score",
-                                        StringUtils
-                                                .formatScore(-SkyWarsReloaded
-                                                        .getCfg()
-                                                        .getDeathValue()))
-                                .setVariable("killer", killer.getName())
-                                .setVariable("killer_score",
-                                        StringUtils.formatScore(killTotal))
-                                .format("game.death.quit-while-tagged"));
                     }
+                    killer.setScore(killer.getScore() + killTotal);
+                    gPlayer.setScore(gPlayer.getScore()
+                            - SkyWarsReloaded.getCfg().getDeathValue());
+                    addBalance(killer, killTotal);
+                    removeBalance(gPlayer, SkyWarsReloaded.getCfg()
+                            .getDeathValue());
+                    sendGameMessage(new Messaging.MessageFormatter()
+                            .withPrefix()
+                            .setVariable("player", gPlayer.getName())
+                            .setVariable(
+                                    "player_score",
+                                    StringUtils
+                                            .formatScore(-SkyWarsReloaded
+                                                    .getCfg()
+                                                    .getDeathValue()))
+                            .setVariable("killer", killer.getName())
+                            .setVariable("killer_score",
+                                    StringUtils.formatScore(killTotal))
+                            .format("game.death.quit-while-tagged"));
                 } else {
                     gPlayer.setScore(gPlayer.getScore()
                             - SkyWarsReloaded.getCfg().getLeaveValue());
@@ -721,16 +719,6 @@ public class Game {
         }
     }
 
-    public Boolean playerExists(GamePlayer name) {
-        for (GamePlayer gPlayer : gPlayers) {
-            if (name.getUUID().toString()
-                    .equalsIgnoreCase(gPlayer.getUUID().toString())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public ArrayList<GamePlayer> getPlayers() {
         return new ArrayList<>(gPlayers);
     }
@@ -771,10 +759,6 @@ public class Game {
 
     public GameState getState() {
         return gameState;
-    }
-
-    public void setState(GameState gState) {
-        gameState = gState;
     }
 
     public Boolean isFull() {
@@ -1043,12 +1027,12 @@ public class Game {
     }
 
     private void sendGameMessage(String message) {
-        getAllPlayers().stream().map(GamePlayer::getP)
+        getAllPlayers().stream().map(GamePlayer::getP).filter(p -> p != null)
                 .forEach(p -> p.sendMessage(message));
     }
 
     public void playSound(Sound sound) {
-        getAllPlayers().stream().map(GamePlayer::getP)
+        getAllPlayers().stream().map(GamePlayer::getP).filter(p -> p != null)
                 .forEach(p -> p.playSound(p.getLocation(), sound, 1, 1));
     }
 
@@ -1193,10 +1177,6 @@ public class Game {
             }
         }
         return false;
-    }
-
-    public World getMapWorld() {
-        return mapWorld;
     }
 
     public void addSpectator(GamePlayer gPlayer) {
@@ -1465,8 +1445,7 @@ public class Game {
 
     private void setJump() {
         String jump = getJump();
-        if (jump.equalsIgnoreCase("normal")) {
-        } else if (jump.equalsIgnoreCase("high jump")) {
+        if (jump.equalsIgnoreCase("high jump")) {
             getPlayers().stream().filter(gPlayer -> gPlayer.getP() != null).forEach(gPlayer -> gPlayer.getP().addPotionEffect(
                     new PotionEffect(PotionEffectType.JUMP,
                             Integer.MAX_VALUE, SkyWarsReloaded.getCfg()

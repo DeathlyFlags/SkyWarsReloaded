@@ -17,14 +17,13 @@ public class LeaveCommand implements CommandExecutor {
         if (player.hasPermission("swr.quit")) {
             GamePlayer gPlayer = SkyWarsReloaded.getPC().getPlayer(
                     player.getUniqueId());
+            Game game = gPlayer.getGame();
             if (gPlayer.inGame() && !gPlayer.isSpectating()) {
-                Game game = gPlayer.getGame();
                 game.deletePlayer(gPlayer, true, false);
                 return true;
             } else if (SkyWarsReloaded.getCfg().spectatingEnabled()) {
                 if (gPlayer.isSpectating()) {
-                    Game game = gPlayer.getGame();
-                    gPlayer.spectateMode(false, game, game.getSpawn(), false);
+                    gPlayer.spectateMode(false, game, SkyWarsReloaded.getCfg().getSpawn(), false);
                 }
                 return true;
             }

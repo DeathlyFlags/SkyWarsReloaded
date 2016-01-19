@@ -2,7 +2,6 @@ package com.walrusone.skywars.listeners;
 
 import com.walrusone.skywars.SkyWarsReloaded;
 import com.walrusone.skywars.game.Game;
-import com.walrusone.skywars.game.Game.GameState;
 import com.walrusone.skywars.game.GamePlayer;
 import com.walrusone.skywars.utilities.Messaging;
 import org.bukkit.ChatColor;
@@ -133,9 +132,7 @@ public class SignListener implements Listener {
                                             if (e.getPlayer().hasPermission("swr.play")) {
                                                 Game game = SkyWarsReloaded.getGC().getGame(Integer.valueOf(gameNumber));
                                                 if (game != null) {
-                                                    if (!game.isFull() && game.getState() == GameState.PREGAME) {
                                                         game.addPlayer(gPlayer);
-                                                    }
                                                 }
                                             }
                                         }
